@@ -10,20 +10,7 @@ With [Environment Modules](http://modules.sourceforge.net/), one can create plug
 $ REPO_ROOT=$HOME/modules
 $ moduledev config set root $REPO_ROOT
 $ moduledev setup mymodules
-Module repository successfully setup in
-
-$HOME/modules
-
-You can now start using the repository by adding the following to your ~/.bashrc (or whatever login scripts you use):
-
-module use --append $HOME/modules/modulefile
-module use --append $HOME/modules/modulefile/mymodules
-If you haven't already, it would be useful to configure a global maintainer and root:
-
-moduledev config set root $HOME/modules
-moduledev config set maintainer "Me <me@me.me>"
-
-Create a new module using module init
+# ...
 ```
 
 Now we can activate our new repository with the module installation:
