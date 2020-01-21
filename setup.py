@@ -6,7 +6,7 @@ setup(
     packages=['moduledev'],
     #url='https://bitbucket.org/bobzimmermann/model_selector',
     license='MIT',
-    install_requires=['click','PyYAML'],
+    install_requires=['click','PyYAML','colorama'],
     entry_points={
         'console_scripts': ['moduledev=moduledev.cli:moduledev']
     },
