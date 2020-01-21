@@ -49,7 +49,7 @@ which points the environment variables to where we want them to go:
 
 ```
 $ moduledev show hello
-set MAINTAINER "testmaintainer"
+set MAINTAINER "nomaintainer"
 set HELPTEXT ""
 set DESCRIPTION ""
 
@@ -57,13 +57,13 @@ append-path PATH $basedir/bin
 append-path MANPATH $basedir/man
 ```
 
-This is a little spartan in terms of information. We could have set `HELPTEXT`
-and `DESCRIPTION` at the `init` phase, but we can also easily edit the file
+This is spartan in terms of information. We could have set `HELPTEXT`
+and `DESCRIPTION` at the `init` phase, and we could also set the `MAINTAINER`
+using `moduledev config`.  We can also easily edit the file
 directly:
 
-
 ```
-$ env EDITOR="nano" moduledev edit hello
+$ env EDITOR="nano" moduledev edit hello  # editor defaults to "vim"
 ```
 
 We can already load and run `hello` using `module`:
