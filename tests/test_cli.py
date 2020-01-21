@@ -11,6 +11,11 @@ def root(tmpdir):
     return root
 
 
+def test_help(runner):
+    result = runner.invoke(moduledev.moduledev, [])
+    assert result.exit_code == 0
+
+
 def test_setup(runner, root):
     result = runner.invoke(moduledev.moduledev,
                            ["--root", root, "setup", "test"])
