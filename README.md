@@ -43,8 +43,12 @@ ${ROOT}/modules/hello/2.10
 |-- bin -> $HOME/builds/hello-2.10/stage/bin
 `-- man -> $HOME/builds/hello-2.10/stage/share/man
 ```
-We can see that the directories havebeen linked off of the stage 
-directory we created above. We can also see that a modulefile has been created
+
+We can see that the directories havebeen linked off of the stage directory we created above. Note that these will be non-portable with links. If you wish to copy the files to the module tree, you may use the `--copy` option with `module path add`.
+
+## Module Viewing and Editing
+
+We can also see that a modulefile has been created
 which points the environment variables to where we want them to go:
 
 ```
@@ -65,6 +69,8 @@ directly:
 ```
 $ env EDITOR="nano" moduledev edit hello  # editor defaults to "vim"
 ```
+
+## Using `moduledev` modules
 
 We can already load and run `hello` using `module`:
 
@@ -91,7 +97,7 @@ $ moduledev init --category dev moduledev 0.1
 $ git clone https://github.com/nijibabulu/moduledev.git
 $ cd moduledev
 $ pip install --no-deps --install-option="--prefix=$(pwd)/stage" .
-$ moduledev path add PATH 
+$ moduledev path add PATH $(pwd)/stage/bin
 $ moduledev path add moduledev PYTHONPATH $(pwd)/stage/lib/python3.8/site-packages
 $ module avail dev
 ------------------- ${ROOT}/dev -------------------
