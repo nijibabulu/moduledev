@@ -21,8 +21,7 @@ module use --append $HOME/modules/modulefile/mymodules
 
 ## Module Creation
 
-And finally we can start creating modules. First we'll build and install a
-package in a non-system stage area (e.g. in the source directory):
+First we'll build and install a package in a non-system stage area (e.g. in the source directory):
 ```
 $ curl -O https://ftp.gnu.org/gnu/hello/hello-2.10.tar.gz
 $ tar xf hello-2.10.tar.gz
@@ -33,8 +32,7 @@ $ ls stage
 bin share
 ```
 
-To creat the module, we will simply want to add `bin` to our PATH and
-`share/man` to our MANPATH:
+To populate the module, we will simply want to add `bin` to our PATH and `share/man` to our MANPATH:
 
 ```
 $ moduledev init hello 2.10
