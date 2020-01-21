@@ -98,12 +98,16 @@ class ModuleTree:
             else:
                 yield loader.module
 
+    def can_setup(self, name):
+        """Return True if the root directory of this tree can be setup"""
+        return self.exists() == True \
+            and os.path.exists(self.root_dir) \
+            and os.access(self.root_dir, os.W_OK) \
+            and not len(os.listdir(self.root_dir))
+
     def setup(self, name):
         """Set up the module root tree."""
-        if self.exists() == False \
-                or not os.path.exists(self.root_dir) \
-                or not os.access(self.root_dir, os.W_OK) \
-                or len(os.listdir(self.root_dir)):
+        if not self.can_setup(name):
             raise ValueError("Module tree must be set up in an empty, "
                              "writeable directory")
         os.makedirs(str(self.modulefile_dir()))

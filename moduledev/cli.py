@@ -123,8 +123,29 @@ def setup(ctx, name):
     """
     used_root = ctx.obj.check_root()
     module_tree = ModuleTree(used_root)
+    if not module_tree.can_setup(name):
+        click.secho("Module tree root must be set up in an empty, "
+                    "writeable directory. Change the root location\neither "
+                    "with the --root option or via moduledev config.",
+                    bold=True, fg="red")
+        raise SystemExit(" ")
     module_tree.setup(name)
-    
+    click.echo("Module repository successfully setup in\n")
+    click.secho(f"{used_root}\n", bold=True)
+    click.echo("You can now start using the repository by adding the "
+               "following to your ~/.bashrc (or whatever login scripts "
+               "you use):\n")
+    click.secho(f"module use --append {used_root}/modulefile", bold=True)
+    click.secho(f"module use --append {used_root}/modulefile/{name}", bold=True)
+    click.echo("If you haven't already, it would be useful to configure "
+               "a global maintainer and root:\n")
+    click.secho(f"moduledev config set root {used_root}", bold=True)
+    click.secho(f"moduledev config set maintainer \"Me <me@me.me>\"\n",
+                bold=True)
+    click.echo("Create a new module using ", nl=False)
+    click.secho("module init", bold=True, nl=False)
+    click.echo("\n")
+
 
 @moduledev.group()
 def config(): 

@@ -24,6 +24,14 @@ def test_no_root(runner):
     assert type(result.exception) == SystemExit
 
 
+def test_setup_bad_root(runner, root):
+    result = runner.invoke(moduledev.moduledev, 
+                           ["--root", root / "nonexistentdir", "setup", "test"])
+    print(result.output)
+    print(result.exception)
+    assert type(result.exception) == SystemExit
+
+
 def test_no_setup(runner, root):
     result = runner.invoke(moduledev.moduledev,
                            ["--root", root, "init", "package", "1.0"])
