@@ -4,7 +4,7 @@ init:
 
 test:
 	pipenv run py.test tests
-	pipenv run py.test --cov=itree tests
+	pipenv run py.test --cov=moduledev tests
 
 clean: build-clean dist-clean
 
