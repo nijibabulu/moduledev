@@ -44,27 +44,30 @@ class CliCfg:
         return module_tree
 
 
-class ModuleDevCommand(click.Command):
-    def __init__(self, name, short_help_color=Fore.WHITE, *args, **kwargs):
-        click.Command.__init__(self, name, *args, **kwargs)
-        self.short_help_color = short_help_color
+class ModuleDevCliMeta(type):
+    def __init__(cls, name, bases, dct):
+        def _init(self, name, short_help_color=Fore.WHITE, *args, **kwargs):
+            super(cls, self).__init__(name, *args, **kwargs)
+            self.short_help_color = short_help_color
 
-    def get_short_help_str(self, limit):
-        s = super(ModuleDevCommand, self).get_short_help_str(limit)
-        return self.short_help_color + s + Style.RESET_ALL
+        def _get_short_help_str(self, limit):
+            s = super(cls, self).get_short_help_str(limit)
+            return self.short_help_color + s + Style.RESET_ALL
 
-
-class ModuleDevGroup(click.Group):
-    def __init__(self, name, short_help_color=Fore.WHITE, *args, **kwargs):
-        click.Group.__init__(self, name, *args, **kwargs)
-        self.short_help_color = short_help_color
-
-    def get_short_help_str(self, limit):
-        s = super(ModuleDevGroup, self).get_short_help_str(limit)
-        return self.short_help_color + s + Style.RESET_ALL
+        cls.__init__ = _init
+        cls.get_short_help_str = _get_short_help_str
+        super(ModuleDevCliMeta, cls).__init__(name, bases, dct)
 
 
-@click.group()
+class ModuleDevCommand(click.Command, metaclass=ModuleDevCliMeta):
+    pass
+
+
+class ModuleDevGroup(click.Group, metaclass=ModuleDevCliMeta):
+    pass
+
+
+@click.group(cls=ModuleDevGroup)
 @click.option("--maintainer",
               help="Set the package maintainer, overriding configuration")
 @click.option("--root",
@@ -79,10 +82,6 @@ def moduledev(ctx, maintainer, root):
     """
     ctx.obj = CliCfg(Config(), root, maintainer)
 
-
-"""
-should we support toplevel versus version-level .modulefile files?
-"""
 
 @moduledev.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
 @click.option("--force", is_flag=True, default=False)
