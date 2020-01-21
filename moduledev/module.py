@@ -104,10 +104,6 @@ class ModuleTree:
                 or not os.path.exists(self.root_dir) \
                 or not os.access(self.root_dir, os.W_OK) \
                 or len(os.listdir(self.root_dir)):
-            raise ValueError(f"{self.exists() == False} \
-                {os.path.exists(self.root_dir)} \
-                {os.access(self.root_dir, os.W_OK)} \
-                {os.listdir(self.root_dir)}")
             raise ValueError("Module tree must be set up in an empty, "
                              "writeable directory")
         os.makedirs(str(self.modulefile_dir()))
