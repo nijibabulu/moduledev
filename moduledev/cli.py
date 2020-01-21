@@ -67,7 +67,7 @@ should we support toplevel versus version-level .modulefile files?
 @click.pass_context
 def init(ctx, force, package_name, version, helptext, description):
     """
-    Initialize a new module or add a version to a module. For example, the
+    Create a new module or add a module version. For example, the
     command
 
     moduledev init --root /path/to/root hello 1.0
@@ -107,8 +107,8 @@ def init(ctx, force, package_name, version, helptext, description):
 @click.pass_context
 def setup(ctx, name):
     """
-    Set up the root directory structure of the environment modules. The root
-    itself should be set either here in the configuration (as "root"). This will 
+    Set up the root directory structure. The root
+    itself should be set either here in the configuration (as "root"). This will
     create new directories of the following structure:
     
     \b
@@ -150,7 +150,7 @@ def set(ctx, setting, value):
 
 @moduledev.group()
 def path():
-    """Add, remove, or show current paths in a module"""
+    """Add, remove, or show module paths"""
     pass
 
 
