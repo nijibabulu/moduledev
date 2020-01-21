@@ -53,6 +53,15 @@ def test_init_module(example_module, example_module_tree):
     assert builder.valid() == True
 
 
+def test_category(example_module, tmpdir, example_module_tree):
+    example_module.name = "categoried_package"
+    example_module.category = "testcategory"
+    builder = example_module_tree.init_module(example_module)
+    loader = example_module_tree.load_module(example_module.name,
+                                             example_module.version)
+    assert loader.module.category == example_module.category
+
+
 def test_unclean_init_module(example_module, example_module_tree):
     example_module_tree.init_module(example_module)
     with pytest.raises(ValueError):

@@ -85,12 +85,14 @@ def moduledev(ctx, maintainer, root):
 
 @moduledev.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
 @click.option("--force", is_flag=True, default=False)
+@click.option("--category",
+              help="Set a category for the module (defaults to the repo name)")
 @click.argument("PACKAGE_NAME")
 @click.argument("VERSION")
 @click.argument("HELPTEXT", default="", required=False)
 @click.argument("DESCRIPTION", default="", required=False)
 @click.pass_context
-def init(ctx, force, package_name, version, helptext, description):
+def init(ctx, force, package_name, version, helptext, description, category):
     """
     Create a new module or add a module version. For example, the
     command
@@ -120,7 +122,8 @@ def init(ctx, force, package_name, version, helptext, description):
         else:
             maintainer = ctx.obj.config.get("maintainer")
     module_tree = ctx.obj.check_module_tree()
-    m = Module(module_tree, package_name, version, maintainer, helptext, description)
+    m = Module(module_tree, package_name, version, maintainer, helptext,
+               description, category)
     if not module_tree.module_clean(m) and not force:
         raise SystemExit(f"Some file exist where the module should be "
                          f"installed. Use --force to overwrite them.")
