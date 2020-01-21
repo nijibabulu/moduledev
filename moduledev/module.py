@@ -398,9 +398,6 @@ class Module:
         :param path_obj: a path object to compare to
         :return:
         """
-        print([p.path for p in self.paths])
-        print([p.path != path_obj.path for p in self.paths])
-        print(path_obj.path)
         self.paths = [p for p in self.paths
                       if p.path != path_obj.path]
 
