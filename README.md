@@ -30,7 +30,7 @@ modules
 `-- modulefile
     `-- mymodules
         `-- hello
-            `-- 1.0 -> ${PWD}/modules/module/mymodules_modulefile
+            `-- 1.0 -> ${ROOT}/modules/module/mymodules_modulefile
 ```
 
 You can then add paths to the module:
@@ -50,7 +50,7 @@ modules
 `-- modulefile
     `-- mymodules
         `-- hello
-            `-- 1.0 -> /Users/rpz/src/moduledev/modules/module/mymodules_modulefile
+            `-- 1.0 -> ${ROOT}/modules/module/mymodules_modulefile
 ```
 
 You can view and edit the module file:
