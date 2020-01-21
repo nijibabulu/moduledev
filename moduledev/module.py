@@ -317,7 +317,7 @@ class ModuleLoader(ModuleLocation):
     def load(self):
         self.module = Module.from_file(
             self.moduledotfile_path(), self.module_tree, self.name(),
-            self.version(), self.toplevel())
+            self.version(), self.toplevel(), self.category_name())
 
 
 class Path:
@@ -352,7 +352,7 @@ class Module:
         :param helptext: the helptext for the module
         :param description: longer form description of the module
         :param extra_vars: a dict of extra variables to add
-        :param category:
+        :param category: a category for the module
         :param toplevel: whether the module file comes at the top level or
                          (False) version level
         :param extra_commands: list of extra lines to add to the module file
@@ -369,9 +369,9 @@ class Module:
         self.paths = []
 
     @classmethod
-    def from_file(cls, filename, root, name, version, toplevel):
+    def from_file(cls, filename, root, name, version, toplevel, category=None):
         """parse a module file"""
-        module = cls(root, name, version, toplevel=toplevel)
+        module = cls(root, name, version, toplevel=toplevel, category=category)
         for line in open(filename):
             fields = shlex.split(line.strip())
             if len(fields) == 0:
@@ -398,9 +398,6 @@ class Module:
         :param path_obj: a path object to compare to
         :return:
         """
-        print([p.path for p in self.paths])
-        print([p.path != path_obj.path for p in self.paths])
-        print(path_obj.path)
         self.paths = [p for p in self.paths
                       if p.path != path_obj.path]
 

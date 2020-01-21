@@ -1,11 +1,17 @@
 import click
 from subprocess import call
+from colorama import Fore, Style
 
 from .config import *
 from .module import *
 
 
 EDITOR = os.environ.get('EDITOR', 'vim')
+
+INTERACT_CLR = Fore.GREEN
+GROUP_CLR = Fore.YELLOW
+INFO_CLR = Fore.MAGENTA
+SETUP_CLR = Fore.RED
 
 
 class CliCfg:
@@ -38,7 +44,30 @@ class CliCfg:
         return module_tree
 
 
-@click.group()
+class ModuleDevCliMeta(type):
+    def __init__(cls, name, bases, dct):
+        def _init(self, name, short_help_color=Fore.WHITE, *args, **kwargs):
+            super(cls, self).__init__(name, *args, **kwargs)
+            self.short_help_color = short_help_color
+
+        def _get_short_help_str(self, limit):
+            s = super(cls, self).get_short_help_str(limit)
+            return self.short_help_color + s + Style.RESET_ALL
+
+        cls.__init__ = _init
+        cls.get_short_help_str = _get_short_help_str
+        super(ModuleDevCliMeta, cls).__init__(name, bases, dct)
+
+
+class ModuleDevCommand(click.Command, metaclass=ModuleDevCliMeta):
+    pass
+
+
+class ModuleDevGroup(click.Group, metaclass=ModuleDevCliMeta):
+    pass
+
+
+@click.group(cls=ModuleDevGroup)
 @click.option("--maintainer",
               help="Set the package maintainer, overriding configuration")
 @click.option("--root",
@@ -54,18 +83,16 @@ def moduledev(ctx, maintainer, root):
     ctx.obj = CliCfg(Config(), root, maintainer)
 
 
-"""
-should we support toplevel versus version-level .modulefile files?
-"""
-
-@moduledev.command()
+@moduledev.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
 @click.option("--force", is_flag=True, default=False)
+@click.option("--category",
+              help="Set a category for the module (defaults to the repo name)")
 @click.argument("PACKAGE_NAME")
 @click.argument("VERSION")
 @click.argument("HELPTEXT", default="", required=False)
 @click.argument("DESCRIPTION", default="", required=False)
 @click.pass_context
-def init(ctx, force, package_name, version, helptext, description):
+def init(ctx, force, package_name, version, helptext, description, category):
     """
     Create a new module or add a module version. For example, the
     command
@@ -95,14 +122,15 @@ def init(ctx, force, package_name, version, helptext, description):
         else:
             maintainer = ctx.obj.config.get("maintainer")
     module_tree = ctx.obj.check_module_tree()
-    m = Module(module_tree, package_name, version, maintainer, helptext, description)
+    m = Module(module_tree, package_name, version, maintainer, helptext,
+               description, category)
     if not module_tree.module_clean(m) and not force:
         raise SystemExit(f"Some file exist where the module should be "
                          f"installed. Use --force to overwrite them.")
     module_tree.init_module(m, overwrite=force)
 
 
-@moduledev.command()
+@moduledev.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
 @click.argument("NAME")
 @click.pass_context
 def setup(ctx, name):
@@ -147,7 +175,7 @@ def setup(ctx, name):
     click.echo("\n")
 
 
-@moduledev.group()
+@moduledev.group(cls=ModuleDevGroup, short_help_color=GROUP_CLR)
 def config(): 
     """Manage the global configuration."""
     pass
@@ -169,7 +197,7 @@ def set(ctx, setting, value):
     ctx.obj.config.save()
 
 
-@moduledev.group()
+@moduledev.group(cls=ModuleDevGroup, short_help_color=GROUP_CLR)
 def path():
     """Add, remove, or show module paths"""
     pass
@@ -245,7 +273,7 @@ def view(ctx, module_name, version):
                     for p in loader.module.paths))
 
 
-@moduledev.command()
+@moduledev.command(cls=ModuleDevCommand, short_help_color=INTERACT_CLR)
 @click.option("--editor",
               help="Specify the editor", default=EDITOR, show_default=True)
 @click.option("--version",
@@ -259,7 +287,7 @@ def edit(ctx, module_name, version, editor):
     call([editor, loader.moduledotfile_path()])
 
 
-@moduledev.command()
+@moduledev.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
 @click.option("--version",
               help="Specify the module version (default to latest)")
 @click.argument("MODULE_NAME")
@@ -271,7 +299,7 @@ def show(ctx, module_name, version):
     click.echo("".join(open(loader.moduledotfile_path()).readlines()))
 
 
-@moduledev.command()
+@moduledev.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
 @click.option("--all", "all_versions", is_flag=True,
               help="Show all versions of each module (default is to show "
                    "the current version only)")
@@ -283,7 +311,7 @@ def list(ctx, all_versions):
         click.echo(f"{module.name} {module.version}")
 
 
-@moduledev.command()
+@moduledev.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
 @click.option("--version",
               help="Specify the module version (default to latest)")
 @click.argument("MODULE_NAME")
