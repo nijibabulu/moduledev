@@ -4,7 +4,92 @@
 
 # moduledev
 
-`moduledev` is a tool to easily create, edit and manage a repository of environment modules. A module tree is setup as such:
+With [Environment Modules](http://modules.sourceforge.net/), one can create pluggable software modules without installing alongside other packages. This is especially useful for supercomputing environments, where many different library versions may be necessary to be installed. `moduledev` greatly simplifies the process of creating and maintaining the directory structure behind environment modules.  Here's is an example of how you might set up a repository and add a new environment module:
+
+```
+$ REPO_ROOT=$HOME/modules
+$ moduledev config set root $REPO_ROOT
+$ moduledev setup mymodules
+Module repository successfully setup in
+
+$HOME/modules
+
+You can now start using the repository by adding the following to your ~/.bashrc (or whatever login scripts you use):
+
+module use --append $HOME/modules/modulefile
+module use --append $HOME/modules/modulefile/mymodules
+If you haven't already, it would be useful to configure a global maintainer and root:
+
+moduledev config set root $HOME/modules
+moduledev config set maintainer "Me <me@me.me>"
+
+Create a new module using module init
+```
+
+Now we can activate our new repository with the module installation:
+```
+module use --append $HOME/modules/modulefile
+module use --append $HOME/modules/modulefile/mymodules
+```
+
+And finally we can start creating modules. First we'll build and install a
+package in a non-system stage area (e.g. in the source directory):
+```
+$ curl -O https://ftp.gnu.org/gnu/hello/hello-2.10.tar.gz
+$ tar xf hello-2.10.tar.gz
+$ cd hello-2.10
+$ ./configure --prefix=$(pwd)/stage
+$ make install
+$ ls stage
+bin share
+```
+
+To creat the module, we will simply want to add `bin` to our PATH and
+`share/man` to our MANPATH:
+
+```
+$ moduledev init hello 2.10
+$ moduledev path add hello PATH stage/bin
+$ moduledev path add hello MANPATH stage/share/man
+$ tree $(moduledev location hello)
+/Users/rpz/modules/hello/2.10
+|-- bin -> $HOME/builds/hello-2.10/stage/bin
+`-- man -> $HOME/builds/hello-2.10/stage/share/man
+```
+We can see that the directories havebeen linked off of the stage 
+directory we created above. We can also see that a modulefile has been created
+which points the environment variables to where we want them to go:
+
+```
+$ moduledev show hello
+set MAINTAINER "testmaintainer"
+set HELPTEXT ""
+set DESCRIPTION ""
+
+append-path PATH $basedir/bin
+append-path MANPATH $basedir/man
+```
+
+This is a little spartan in terms of information. We could have set `HELPTEXT`
+and `DESCRIPTION` at the `init` phase, but we can also easily edit the file
+directly:
+
+
+```
+$ env EDITOR="nano" moduledev edit hello
+```
+
+We can already load and run `hello` using `module`:
+
+```
+$ module load hello
+$ hello
+Hello, world!
+```
+
+## Behind the scenes
+
+The structure of an empty root with the name `${NAME}` looks like this:
 
 ```
   ${ROOT}
@@ -13,56 +98,27 @@
   `-- modulefile
 ```
 
-Where all the other directories under `${ROOT}` that are not `module` and `modulefile` are modules. For instance, if a module is initialized as such:
+The `${NAME}_modulefile` is the *actual* modulefile which automatically loads
+the abbreviated `.modulefile` file which we will interact with. For instance,
+the structure after having made the hello module above:
 
 
 ```
-$ mkdir modules
-$ moduledev config set root $(pwd)/modules
-$ moduledev setup mymodules
-$ moduledev init hello 1.0
 $ tree modules
 modules
 |-- hello
-|   `-- 1.0
+|   `-- 2.10
 |-- module
-|   `-- mymodules_modulefile
+|   `-- ${NAME}_modulefile
 `-- modulefile
-    `-- mymodules
+    `-- ${NAME}
         `-- hello
-            `-- 1.0 -> ${ROOT}/modules/module/mymodules_modulefile
+            `-- 2.10 -> ${ROOT}/modules/module/${NAME}_modulefile
 ```
 
-You can then add paths to the module:
+The master module file, `${NAME}_modulefile` finds the the `modules/hello/2.10`
+path based on the name of the link `modulefile/${NAME}/hello/2.10` and reads in
+additional variables, such as `DESCRIPTION`, `HELPTEXT`, and so on. 
 
-```
-$ mkdir bin
-$ vi bin/exe.sh
-# edit a script...
-$ moduledev path add PATH bin
-$ tree modules
-modules
-|-- hello
-|   `-- 1.0
-|       `-- bin -> ${BUILDDIR}/moduledev/bin
-|-- module
-|   `-- mymodules_modulefile
-`-- modulefile
-    `-- mymodules
-        `-- hello
-            `-- 1.0 -> ${ROOT}/modules/module/mymodules_modulefile
-```
-
-You can view and edit the module file:
-
-```
-$ moduledev location hello
-${ROOT}/modules/hello/1.1
-$ moduledev show hello
-$ moduledev show hello
-set MAINTAINER "testmaintainer"
-set HELPTEXT "" 
-set DESCRIPTION ""
-$ moduledev edit hello
-# .. add helptext, description and maintainer
-```
+We can use the structure of the `modulefile` directory to create
+pseudo-categories as well *to be documented...*
