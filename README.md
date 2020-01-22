@@ -154,7 +154,7 @@ modules
 |       |-- bin -> /Users/rpz/builds/hello-2.10/stage/bin
 |       `-- man -> /Users/rpz/builds/hello-2.10/stage/share/man
 |-- module
-|   `-- mymodules_modulefile
+|   `-- ${NAME}_modulefile
 |-- moduledev
 |   `-- 0.1
 |       |-- bin -> /Users/rpz/moduledev/stage/bin
@@ -162,8 +162,8 @@ modules
 `-- modulefile
     |-- dev
     |   `-- moduledev
-    |       `-- 0.1 -> /Users/rpz/modules/module/mymodules_modulefile
-    `-- mymodules
+    |       `-- 0.1 -> /Users/rpz/modules/module/${NAME}_modulefile
+    `-- ${NAME}
         `-- hello
-            `-- 2.10 -> /Users/rpz/modules/module/mymodules_modulefile
+            `-- 2.10 -> /Users/rpz/modules/module/${NAME}_modulefile
 ```
