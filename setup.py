@@ -10,6 +10,11 @@ setup(
     entry_points={
         'console_scripts': ['moduledev=moduledev.cli:mdcli']
     },
+    options={
+        'build_scripts': {
+            'executable': '/usr/bin/env python3',
+        },
+    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'License :: OSI Approved :: MIT License',
