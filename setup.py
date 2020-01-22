@@ -8,7 +8,7 @@ setup(
     license='MIT',
     install_requires=['click','PyYAML','colorama'],
     entry_points={
-        'console_scripts': ['moduledev=moduledev.cli:moduledev']
+        'console_scripts': ['moduledev=moduledev.cli:mdcli']
     },
     classifiers=[
         'Development Status :: 3 - Alpha',

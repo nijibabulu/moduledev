@@ -1,10 +1,10 @@
+import os
 from subprocess import call
 
 import click
 from colorama import Fore, Style
 
-from .config import *
-from .module import *
+from . import Config, Module, ModuleTree, Path, confirm
 
 EDITOR = os.environ.get("EDITOR", "vim")
 
@@ -21,7 +21,7 @@ class CliCfg:
     def check_root(self):
         """
         Check that the root exists and return it
-        
+
         :return: a path to the root
         """
         result = self.root or self.config.get("root")
@@ -75,17 +75,17 @@ class ModuleDevGroup(click.Group, metaclass=ModuleDevCliMeta):
 )
 @click.option("--root", help="Set the module root directory, overriding configuration")
 @click.pass_context
-def moduledev(ctx, maintainer, root):
+def mdcli(ctx, maintainer, root):
     """
     Create and maintain environment modules.  Create an environment module
-    repository with the setup subcommand. Initialize a new module with the 
+    repository with the setup subcommand. Initialize a new module with the
     init subcommand. Add paths with the update subcommand. Adjust global
     configuration with the config subcommand.
     """
     ctx.obj = CliCfg(Config(), root, maintainer)
 
 
-@moduledev.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
+@mdcli.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
 @click.option("--force", is_flag=True, default=False)
 @click.option(
     "--category", help="Set a category for the module (defaults to the repo name)"
@@ -101,7 +101,7 @@ def init(ctx, force, package_name, version, helptext, description, category):
     command
 
     moduledev init --root /path/to/root hello 1.0
-    
+
     creates the folloing directory structure:
 
     \b
@@ -115,7 +115,7 @@ def init(ctx, force, package_name, version, helptext, description, category):
                 |-- 1.0 -> /path/to/root/module/example_modulefile
 
     Subsequently paths can be added to the module structure.
-    Note moduledev setup must be run before this command. 
+    Note moduledev setup must be run before this command.
     """
     if ctx.obj.maintainer is None:
         if ctx.obj.config.get("maintainer") is None:
@@ -143,23 +143,23 @@ def init(ctx, force, package_name, version, helptext, description, category):
     module_tree.init_module(m, overwrite=force)
 
 
-@moduledev.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
+@mdcli.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
 @click.option("--force", is_flag=True, default=False)
 @click.argument("MODULE_NAME")
 @click.argument("VERSION", required=False)
 @click.pass_context
-def remove(ctx, module_name, force, version):
+def rm(ctx, module_name, force, version):
     """Remove a module. Will default to the latest version of the module if no
     version is provided."""
     module_tree = ctx.obj.check_module_tree()
     loader = check_module(module_tree, module_name, version)
     if not force:  # pragma: no cover
-        if not util.confirm(f"Really delete {loader.module}? (y/n): ") == "y":
+        if not confirm(f"Really delete {loader.module}? (y/n): ") == "y":
             raise SystemExit("Operation cancelled by user")
     loader.clear()
 
 
-@moduledev.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
+@mdcli.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
 @click.argument("NAME")
 @click.pass_context
 def setup(ctx, name):
@@ -167,7 +167,7 @@ def setup(ctx, name):
     Set up the root directory structure. The root
     itself should be set either here in the configuration (as "root"). This will
     create new directories of the following structure:
-    
+
     \b
     ${ROOT}
     |-- module
@@ -210,7 +210,7 @@ def setup(ctx, name):
     click.echo("\n")
 
 
-@moduledev.group(cls=ModuleDevGroup, short_help_color=GROUP_CLR)
+@mdcli.group(cls=ModuleDevGroup, short_help_color=GROUP_CLR)
 def config():
     """Manage the global configuration."""
     pass
@@ -232,7 +232,7 @@ def set(ctx, setting, value):
     ctx.obj.config.save()
 
 
-@moduledev.group(cls=ModuleDevGroup, short_help_color=GROUP_CLR)
+@mdcli.group(cls=ModuleDevGroup, short_help_color=GROUP_CLR)
 def path():
     """Add, remove, or show module paths"""
     pass
@@ -316,7 +316,7 @@ def view(ctx, module_name, version):
     )
 
 
-@moduledev.command(cls=ModuleDevCommand, short_help_color=INTERACT_CLR)
+@mdcli.command(cls=ModuleDevCommand, short_help_color=INTERACT_CLR)
 @click.option("--editor", help="Specify the editor", default=EDITOR, show_default=True)
 @click.option("--version", help="Specify the module version (default to latest)")
 @click.argument("MODULE_NAME")
@@ -328,7 +328,7 @@ def edit(ctx, module_name, version, editor):
     call([editor, loader.moduledotfile_path()])
 
 
-@moduledev.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
+@mdcli.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
 @click.option("--version", help="Specify the module version (default to latest)")
 @click.argument("MODULE_NAME")
 @click.pass_context
@@ -339,7 +339,7 @@ def show(ctx, module_name, version):
     click.echo("".join(open(loader.moduledotfile_path()).readlines()))
 
 
-@moduledev.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
+@mdcli.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
 @click.option(
     "--all",
     "all_versions",
@@ -355,7 +355,7 @@ def list(ctx, all_versions):
         click.echo(f"{module.name} {module.version}")
 
 
-@moduledev.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
+@mdcli.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
 @click.option("--version", help="Specify the module version (default to latest)")
 @click.argument("MODULE_NAME")
 @click.pass_context

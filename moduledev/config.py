@@ -40,10 +40,10 @@ class Config:
             raise SystemExit(f"Could not open {config_file} for writing: {e}")
 
     def _load(self):
-        """ 
-        Load the configuration from the user home path if it exists. Exits with 
+        """
+        Load the configuration from the user home path if it exists. Exits with
         a parsing error in the event of a parsing exception.
-        
+
         :return: A dictionary containing the nested YAML configuration; None if the
                  file is not found.
         """

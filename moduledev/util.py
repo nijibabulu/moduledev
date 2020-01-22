@@ -11,7 +11,7 @@ def writeable_dir(path):
 
 
 def int_or_chr_key(s):
-    """Return a sortable value as an integer if possible otherwise, convert the 
+    """Return a sortable value as an integer if possible otherwise, convert the
        character to an integer"""
     try:
         return int(s)
@@ -22,7 +22,7 @@ def int_or_chr_key(s):
 def parse_version_token(s):
     """Return a list of one or two tokens depending on the version token type.
        It is accepted to have a number, a character or a number followed by a
-       character, e.g. "5" -> ["5"], "a" -> ["a"] or "5a" -> ["5", "a"] are 
+       character, e.g. "5" -> ["5"], "a" -> ["a"] or "5a" -> ["5", "a"] are
        acceptable."""
     if len(s) > 1 and s[-1].isalpha():
         return [s[:-1], s[-1]]
@@ -32,7 +32,7 @@ def parse_version_token(s):
 
 def tokenize_version(version_string):
     return itertools.chain.from_iterable(
-        parse_version_token(t) for t in re.split("[.\-]", version_string)
+        parse_version_token(t) for t in re.split("\\.|-", version_string)
     )
 
 
@@ -57,7 +57,7 @@ def valid_version(version_string):
     for t in tokens:
         try:
             int_or_chr_key(t)
-        except:
+        except TypeError:
             return False
     return True
 

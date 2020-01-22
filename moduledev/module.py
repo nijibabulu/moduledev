@@ -97,7 +97,7 @@ class ModuleTree:
             )
         for m in self.module_names():
             loader = self.load_module(m)
-            if all_versions == True:
+            if all_versions:
                 for v in loader.available_versions():
                     version_loader = self.load_module(m, v)
                     yield version_loader.module
@@ -107,7 +107,7 @@ class ModuleTree:
     def can_setup(self, name):
         """Return True if the root directory of this tree can be setup"""
         return (
-            self.exists() == True
+            self.exists()
             and os.path.exists(self.root_dir)
             and os.access(self.root_dir, os.W_OK)
             and not len(os.listdir(self.root_dir))
@@ -127,9 +127,9 @@ class ModuleTree:
 
     def init_module(self, module, overwrite=False):
         """
-        Create a module, throwing an exception if any files are in 
+        Create a module, throwing an exception if any files are in
            the way of the module
-        
+
         :return: a ModuleBuilder used to build the module.
         """
         builder = ModuleBuilder(self, module)
@@ -163,9 +163,9 @@ class ModuleTree:
 
     def load_module(self, name, version=None):
         """
-        Locate and parse the module from the filesystem identified by the 
+        Locate and parse the module from the filesystem identified by the
         given name and version.
-        
+
         :return: a ModuleLoder used to load the module.
         """
         loader = ModuleLoader(self, name, version)
@@ -230,7 +230,7 @@ class ModuleLocation(metaclass=ABCMeta):
         return os.path.join(self.modulefile_base(), self.version())
 
     def clean(self):
-        """Return false if files exist where the module resolves to. Note this 
+        """Return false if files exist where the module resolves to. Note this
            does not imply validity or readability"""
         return not os.path.exists(self.module_path()) and not os.path.exists(
             self.modulefile_path()
@@ -405,29 +405,17 @@ class Module:
             extra_commands = []
         if extra_vars is None:
             extra_vars = {}
-        (
-            self.root,
-            self.name,
-            self.version,
-            self.maintainer,
-            self.helptext,
-            self.description,
-            self.category,
-            self.toplevel,
-            self.extra_vars,
-            self.extra_commands,
-        ) = (
-            root,
-            name,
-            version,
-            maintainer,
-            helptext,
-            description,
-            category,
-            toplevel,
-            extra_vars,
-            extra_commands,
-        )
+        self.root = root
+        self.name = name
+        self.version = version
+        self.maintainer = maintainer
+        self.helptext = helptext
+        self.description = description
+        self.category = category
+        self.toplevel = toplevel
+        self.extra_vars = extra_vars
+        self.extra_commands = extra_commands
+
         self.paths = []
 
     @classmethod

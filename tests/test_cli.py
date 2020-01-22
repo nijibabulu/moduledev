@@ -3,7 +3,7 @@ import os
 import click
 import pytest
 
-import moduledev
+from moduledev.cli import mdcli
 
 
 @pytest.fixture
@@ -14,12 +14,12 @@ def root(tmpdir):
 
 
 def test_help(runner):
-    result = runner.invoke(moduledev.moduledev, [])
+    result = runner.invoke(mdcli, [])
     assert result.exit_code == 0
 
 
 def test_setup(runner, root):
-    result = runner.invoke(moduledev.moduledev, ["--root", root, "setup", "test"])
+    result = runner.invoke(mdcli, ["--root", root, "setup", "test"])
     import traceback
 
     traceback.print_tb(result.exc_info[2])
@@ -27,35 +27,27 @@ def test_setup(runner, root):
 
 
 def test_no_root(runner):
-    result = runner.invoke(moduledev.moduledev, ["setup", "test"])
+    result = runner.invoke(mdcli, ["setup", "test"])
     assert type(result.exception) == SystemExit
 
 
 def test_setup_bad_root(runner, root):
-    result = runner.invoke(
-        moduledev.moduledev, ["--root", root / "nonexistentdir", "setup", "test"]
-    )
+    result = runner.invoke(mdcli, ["--root", root / "nonexistentdir", "setup", "test"])
     print(result.output)
     print(result.exception)
     assert type(result.exception) == SystemExit
 
 
 def test_no_setup(runner, root):
-    result = runner.invoke(
-        moduledev.moduledev, ["--root", root, "init", "package", "1.0"]
-    )
+    result = runner.invoke(mdcli, ["--root", root, "init", "package", "1.0"])
     assert type(result.exception) == SystemExit
     assert "moduledev setup" in str(result.exception)
 
 
 def test_maintainer_in_config(runner, tmpdir, root):
-    runner.invoke(moduledev.moduledev, ["--root", root, "setup", "test"])
-    runner.invoke(
-        moduledev.moduledev, ["config", "set", "maintainer", "testmaintainer"]
-    )
-    result = runner.invoke(
-        moduledev.moduledev, ["--root", root, "init", "package", "1.0"]
-    )
+    runner.invoke(mdcli, ["--root", root, "setup", "test"])
+    runner.invoke(mdcli, ["config", "set", "maintainer", "testmaintainer"])
+    result = runner.invoke(mdcli, ["--root", root, "init", "package", "1.0"])
     assert result.exit_code == 0
     assert 'set MAINTAINER "testmaintainer"' in "\n".join(
         open(tmpdir / "test" / "package" / ".modulefile").readlines()
@@ -63,74 +55,65 @@ def test_maintainer_in_config(runner, tmpdir, root):
 
 
 def test_no_maintainer_warning(runner, root):
-    runner.invoke(moduledev.moduledev, ["--root", root, "setup", "test"])
-    result = runner.invoke(
-        moduledev.moduledev, ["--root", root, "init", "package", "1.0"]
-    )
+    runner.invoke(mdcli, ["--root", root, "setup", "test"])
+    result = runner.invoke(mdcli, ["--root", root, "init", "package", "1.0"])
     assert result.exit_code == 0
     assert "maintainer not set" in result.output
 
 
 def test_no_automatic_overwrite(runner, root):
-    runner.invoke(moduledev.moduledev, ["--root", root, "setup", "test"])
-    result = runner.invoke(
-        moduledev.moduledev, ["--root", root, "init", "package", "1.0"]
-    )
+    runner.invoke(mdcli, ["--root", root, "setup", "test"])
+    result = runner.invoke(mdcli, ["--root", root, "init", "package", "1.0"])
     assert result.exit_code == 0
-    result = runner.invoke(
-        moduledev.moduledev, ["--root", root, "init", "package", "1.0"]
-    )
+    result = runner.invoke(mdcli, ["--root", root, "init", "package", "1.0"])
     assert type(result.exception) == SystemExit
     assert "Use --force" in str(result.exception)
 
 
 def test_category_init(runner, root):
-    runner.invoke(moduledev.moduledev, ["--root", root, "setup", "test"])
+    runner.invoke(mdcli, ["--root", root, "setup", "test"])
     result = runner.invoke(
-        moduledev.moduledev,
-        ["--root", root, "init", "--category", "testcategory", "package", "1.0"],
+        mdcli, ["--root", root, "init", "--category", "testcategory", "package", "1.0"],
     )
     assert result.exit_code == 0
 
 
 def test_remove(runner, root):
-    runner.invoke(moduledev.moduledev, ["--root", root, "setup", "test"])
-    runner.invoke(moduledev.moduledev, ["--root", root, "init", "package", "1.0"])
-    result = runner.invoke(
-        moduledev.moduledev, ["--root", root, "remove", "--force", "package"]
-    )
+    runner.invoke(mdcli, ["--root", root, "setup", "test"])
+    runner.invoke(mdcli, ["--root", root, "init", "package", "1.0"])
+    result = runner.invoke(mdcli, ["--root", root, "rm", "--force", "package"])
     assert result.exit_code == 0
-    result = runner.invoke(moduledev.moduledev, ["--root", root, "list"])
+    result = runner.invoke(mdcli, ["--root", root, "list"])
     assert result.exit_code == 0
     assert len(result.output.strip()) == 0
 
 
 def test_config_get(runner):
-    result = runner.invoke(moduledev.moduledev, ["config", "get"])
+    result = runner.invoke(mdcli, ["config", "get"])
     assert result.exit_code == 0
 
 
 def test_config_set(runner, tmpdir):
-    result = runner.invoke(moduledev.moduledev, ["config", "set", "setting", "value"])
+    result = runner.invoke(mdcli, ["config", "set", "setting", "value"])
     assert result.exit_code == 0
 
-    result2 = runner.invoke(moduledev.moduledev, ["config", "get", "setting"])
+    result2 = runner.invoke(mdcli, ["config", "get", "setting"])
     assert result2.exit_code == 0
     assert result2.output == "value\n"
 
 
 def setup_basic_package(runner, root):
-    runner.invoke(moduledev.moduledev, ["config", "set", "root", str(root)])
-    runner.invoke(moduledev.moduledev, ["setup", "test"])
-    runner.invoke(moduledev.moduledev, ["config", "set", "maintainer", "testmt"])
-    runner.invoke(moduledev.moduledev, ["init", "package", "1.0"])
+    runner.invoke(mdcli, ["config", "set", "root", str(root)])
+    runner.invoke(mdcli, ["setup", "test"])
+    runner.invoke(mdcli, ["config", "set", "maintainer", "testmt"])
+    runner.invoke(mdcli, ["init", "package", "1.0"])
 
 
 def setup_path_package(runner, tmpdir, root):
     setup_basic_package(runner, root)
     os.mkdir(tmpdir / "bin")
     result = runner.invoke(
-        moduledev.moduledev, ["path", "add", "package", "PATH", str(tmpdir / "bin")]
+        mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin")]
     )
 
 
@@ -138,7 +121,7 @@ def test_path_add(runner, tmpdir, root):
     setup_basic_package(runner, root)
     os.mkdir(tmpdir / "bin")
     result = runner.invoke(
-        moduledev.moduledev, ["path", "add", "package", "PATH", str(tmpdir / "bin")]
+        mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin")]
     )
     assert result.exit_code == 0
     assert os.path.exists(root / "package" / "1.0" / "bin")
@@ -148,11 +131,11 @@ def test_path_add(runner, tmpdir, root):
 
 
 def test_path_add_nomodule(runner, tmpdir, root):
-    runner.invoke(moduledev.moduledev, ["config", "set", "root", str(root)])
-    runner.invoke(moduledev.moduledev, ["setup", "test"])
+    runner.invoke(mdcli, ["config", "set", "root", str(root)])
+    runner.invoke(mdcli, ["setup", "test"])
     os.mkdir(tmpdir / "bin")
     result = runner.invoke(
-        moduledev.moduledev,
+        mdcli,
         ["path", "add", "--version", "1.0", "package", "PATH", str(tmpdir / "bin")],
     )
     import traceback
@@ -166,11 +149,9 @@ def test_path_add_nomodule(runner, tmpdir, root):
 def test_path_add_nooverwrite(runner, tmpdir, root):
     setup_basic_package(runner, root)
     os.mkdir(tmpdir / "bin")
-    runner.invoke(
-        moduledev.moduledev, ["path", "add", "package", "PATH", str(tmpdir / "bin")]
-    )
+    runner.invoke(mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin")])
     result = runner.invoke(
-        moduledev.moduledev, ["path", "add", "package", "PATH", str(tmpdir / "bin")]
+        mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin")]
     )
     assert result.exit_code != 0
     assert "already exists" in str(result.output)
@@ -180,12 +161,11 @@ def test_path_add_overwrite_copy(runner, tmpdir, root):
     setup_basic_package(runner, root)
     os.mkdir(tmpdir / "bin")
     runner.invoke(
-        moduledev.moduledev,
-        ["path", "add", "--copy", "package", "PATH", str(tmpdir / "bin")],
+        mdcli, ["path", "add", "--copy", "package", "PATH", str(tmpdir / "bin")],
     )
     os.mkdir(tmpdir / "bin" / "hi")
     result = runner.invoke(
-        moduledev.moduledev,
+        mdcli,
         [
             "path",
             "add",
@@ -203,13 +183,9 @@ def test_path_add_overwrite_copy(runner, tmpdir, root):
 def test_path_remove(runner, tmpdir, root):
     setup_basic_package(runner, root)
     os.mkdir(tmpdir / "bintest")
-    runner.invoke(
-        moduledev.moduledev, ["path", "add", "package", "PATH", str(tmpdir / "bintest")]
-    )
+    runner.invoke(mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bintest")])
     result = runner.invoke(
-        moduledev.moduledev,
-        ["path", "remove", "package", "bintest"],
-        catch_exceptions=False,
+        mdcli, ["path", "remove", "package", "bintest"], catch_exceptions=False,
     )
     print(result.output)
     assert result.exit_code == 0
@@ -219,14 +195,14 @@ def test_path_remove(runner, tmpdir, root):
 
 def test_path_view(runner, tmpdir, root):
     setup_path_package(runner, tmpdir, root)
-    result = runner.invoke(moduledev.moduledev, ["path", "view", "package"])
+    result = runner.invoke(mdcli, ["path", "view", "package"])
     assert result.exit_code == 0
     assert "bin" in result.output
 
 
 def test_edit(runner, root):
     setup_basic_package(runner, root)
-    result = runner.invoke(moduledev.moduledev, ["edit", "--editor", "cat", "package"])
+    result = runner.invoke(mdcli, ["edit", "--editor", "cat", "package"])
     # TODO so far cannot capture stdout from the subcall it seems
     # can't test if the outoutp is ok
     assert result.exit_code == 0
@@ -234,25 +210,25 @@ def test_edit(runner, root):
 
 def test_show(runner, root):
     setup_basic_package(runner, root)
-    result = runner.invoke(moduledev.moduledev, ["show", "package"])
+    result = runner.invoke(mdcli, ["show", "package"])
     assert result.exit_code == 0
     assert "MAINTAINER" in result.output
 
 
 def test_list(runner, root):
     setup_basic_package(runner, root)
-    runner.invoke(moduledev.moduledev, ["init", "package", "1.1"])
-    runner.invoke(moduledev.moduledev, ["init", "new_package", "1.0"])
-    result = runner.invoke(moduledev.moduledev, ["list"])
+    runner.invoke(mdcli, ["init", "package", "1.1"])
+    runner.invoke(mdcli, ["init", "new_package", "1.0"])
+    result = runner.invoke(mdcli, ["list"])
     assert result.exit_code == 0
     assert len(result.output.strip().split("\n")) == 2
-    result = runner.invoke(moduledev.moduledev, ["list", "--all"])
+    result = runner.invoke(mdcli, ["list", "--all"])
     assert result.exit_code == 0
     assert len(result.output.strip().split("\n")) == 3
 
 
 def test_path(runner, root, tmpdir):
     setup_basic_package(runner, root)
-    result = runner.invoke(moduledev.moduledev, ["location", "package"])
+    result = runner.invoke(mdcli, ["location", "package"])
     assert result.exit_code == 0
     assert result.output.strip() == str(tmpdir / "test" / "package" / "1.0")

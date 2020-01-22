@@ -11,7 +11,7 @@ black = "*"
 flake8 = "*"
 
 [packages]
-moduledev = {path = ".",editable = true}
+moduledev = {editable = true,path = "."}
 click = "*"
 pyyaml = "*"
 colorama = "*"
