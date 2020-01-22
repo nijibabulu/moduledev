@@ -441,6 +441,8 @@ class Module:
                 module.paths.append(
                     Path(path=fields[2], operation=fields[0], name=fields[1])
                 )
+            else:
+                module.extra_commands.append(line.strip())
         return module
 
     def remove_path(self, path_obj):
@@ -463,8 +465,9 @@ class Module:
 set HELPTEXT "{self.helptext}"
 set DESCRIPTION "{self.description}"\n"""
             + "\n".join([f'set {k} "{v}"' for k, v in self.extra_vars.items()])
-            + "\n\n"
+            + "\n"
             + "\n".join(str(p) for p in self.paths)
             + "\n"
+            + "\n".join(self.extra_commands)
         )
         return text

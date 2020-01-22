@@ -141,6 +141,17 @@ def test_save_path(example_builder, bindir):
     example_builder.save_module_file()
 
 
+def test_extra_commands(example_module, example_module_tree):
+    builder = example_module_tree.init_module(example_module)
+    with open(builder.moduledotfile_path(), "a") as f:
+        f.write("extracommand\n")
+    loader = example_module_tree.load_module(
+        example_module.name, example_module.version
+    )
+    loader.save_module_file()
+    assert "extracommand" in "\n".join(open(builder.moduledotfile_path()).readlines())
+
+
 def test_versions(example_module_tree, example_module):
     example_module.version = "1.0"
     builder1 = example_module_tree.init_module(example_module)
