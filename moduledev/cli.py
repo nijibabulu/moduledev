@@ -131,6 +131,22 @@ def init(ctx, force, package_name, version, helptext, description, category):
 
 
 @moduledev.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
+@click.option("--force", is_flag=True, default=False)
+@click.argument("MODULE_NAME")
+@click.argument("VERSION", required=False)
+@click.pass_context
+def remove(ctx, module_name, force, version):
+    """Remove a module. Will default to the latest version of the module if no
+    version is provided."""
+    module_tree = ctx.obj.check_module_tree()
+    loader = check_module(module_tree, module_name, version)
+    if not force: # pragma: no cover
+        if not util.confirm(f"Really delete {loader.module}? (y/n): ") == "y":
+            raise SystemExit("Operation cancelled by user")
+    loader.clear()
+
+
+@moduledev.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
 @click.argument("NAME")
 @click.pass_context
 def setup(ctx, name):

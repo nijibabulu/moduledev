@@ -77,6 +77,7 @@ def test_no_automatic_overwrite(runner, root):
     assert "Use --force" in str(result.exception)
 
 
+
 def test_category_init(runner, root):
     runner.invoke(moduledev.moduledev,
                   ["--root", root, "setup", "test"])
@@ -84,6 +85,19 @@ def test_category_init(runner, root):
                   ["--root", root, "init", "--category", "testcategory",
                    "package", "1.0"])
     assert result.exit_code == 0
+
+    
+def test_remove(runner, root):
+    runner.invoke(moduledev.moduledev,
+                  ["--root", root, "setup", "test"])
+    runner.invoke(moduledev.moduledev,
+                  ["--root", root, "init", "package", "1.0"])
+    result = runner.invoke(moduledev.moduledev,
+                           ["--root", root, "remove", "--force", "package"])
+    assert result.exit_code == 0
+    result = runner.invoke(moduledev.moduledev, ["--root", root, "list"])
+    assert result.exit_code == 0
+    assert len(result.output.strip()) == 0
 
 
 def test_config_get(runner):

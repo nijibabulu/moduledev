@@ -186,8 +186,12 @@ class ModuleLocation(metaclass=ABCMeta):
     @abstractmethod
     def version(self): raise NotImplementedError
 
+    def available_versions(self):
+        return [v for v in os.listdir(self.module_base()) 
+                if util.valid_version(v)]
+
     def moduledotfile_path(self):
-        base = os.path.join(self.module_tree.root_dir, self.name())
+        base = self.module_base()
         if self.toplevel():
             return os.path.join(base, ".modulefile")
         else:
@@ -202,9 +206,12 @@ class ModuleLocation(metaclass=ABCMeta):
     def module_path(self):
         return os.path.join(self.module_base(), self.version())
 
-    def modulefile_path(self):
+    def modulefile_base(self):
         return os.path.join(self.module_tree.modulefile_dir(),
-                            self.category_name(), self.name(),
+                            self.category_name(), self.name())
+
+    def modulefile_path(self):
+        return os.path.join(self.modulefile_base(),
                             self.version())
 
     def clean(self):
@@ -245,6 +252,15 @@ class ModuleLocation(metaclass=ABCMeta):
         with open(self.moduledotfile_path(), "w") as f:
             f.write(self.module.dump())
 
+    def clear(self):
+        if os.path.exists(self.modulefile_path()):
+            os.unlink(self.modulefile_path())
+        shutil.rmtree(self.module_path(), ignore_errors=True)
+        if len(self.available_versions()) == 0:
+            shutil.rmtree(self.module_base())
+            shutil.rmtree(self.modulefile_base())
+
+
 
 class ModuleBuilder(ModuleLocation):
     """A module builder class."""
@@ -268,10 +284,6 @@ class ModuleBuilder(ModuleLocation):
                    self.modulefile_path())
         os.makedirs(self.module_path())
         self.save_module_file()
-
-    def clear(self):
-        shutil.rmtree(self.module_path(), ignore_errors=True)
-        os.unlink(self.modulefile_path())
 
 
 class ModuleLoader(ModuleLocation):
@@ -300,10 +312,6 @@ class ModuleLoader(ModuleLocation):
                          self.version(), ".modulefile"))
 
     def name(self): return self._name
-
-    def available_versions(self):
-        return [v for v in os.listdir(self.module_base()) 
-                if util.valid_version(v)]
 
     def version(self):
         if self._version is None:
