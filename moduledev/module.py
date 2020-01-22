@@ -75,20 +75,25 @@ class ModuleTree:
         Check if the module root tree is set up. Exit if it appears
         corrupted.
         """
-        return self.exists() and \
-               util.writeable_dir(self.root_dir) and \
-               util.writeable_dir(self.modulefile_dir()) and \
-               util.writeable_dir(self.module_dir()) and \
-               self.master_module_file() is not None
+        return (
+            self.exists()
+            and util.writeable_dir(self.root_dir)
+            and util.writeable_dir(self.modulefile_dir())
+            and util.writeable_dir(self.module_dir())
+            and self.master_module_file() is not None
+        )
 
     def module_names(self):
-        return [m for m in os.listdir(self.root_dir)
-                if m != "module" and m != "modulefile"]
+        return [
+            m for m in os.listdir(self.root_dir) if m != "module" and m != "modulefile"
+        ]
 
     def modules(self, all_versions=False):
         if not self.valid():
-            raise RuntimeError("Cannot get available modules from a "
-                               "module tree that has not been setup")
+            raise RuntimeError(
+                "Cannot get available modules from a "
+                "module tree that has not been setup"
+            )
         for m in self.module_names():
             loader = self.load_module(m)
             if all_versions == True:
@@ -100,16 +105,19 @@ class ModuleTree:
 
     def can_setup(self, name):
         """Return True if the root directory of this tree can be setup"""
-        return self.exists() == True \
-            and os.path.exists(self.root_dir) \
-            and os.access(self.root_dir, os.W_OK) \
+        return (
+            self.exists() == True
+            and os.path.exists(self.root_dir)
+            and os.access(self.root_dir, os.W_OK)
             and not len(os.listdir(self.root_dir))
+        )
 
     def setup(self, name):
         """Set up the module root tree."""
         if not self.can_setup(name):
-            raise ValueError("Module tree must be set up in an empty, "
-                             "writeable directory")
+            raise ValueError(
+                "Module tree must be set up in an empty, " "writeable directory"
+            )
         os.makedirs(str(self.modulefile_dir()))
         os.makedirs(str(self.module_dir()))
         f = open(self._master_module_file_name(name), "w")
@@ -128,8 +136,9 @@ class ModuleTree:
             if overwrite:
                 builder.clear()
             else:
-                raise ValueError(f"Some files exist in the module tree "
-                                 f"where {module} should be.")
+                raise ValueError(
+                    f"Some files exist in the module tree " f"where {module} should be."
+                )
         builder.build()
         return builder
 
@@ -160,8 +169,10 @@ class ModuleTree:
         """
         loader = ModuleLoader(self, name, version)
         if not loader.valid():
-            raise ValueError(f"Module {name}-{version} does not appear to "
-                             f"be a valid module in the tree {self.root_dir}")
+            raise ValueError(
+                f"Module {name}-{version} does not appear to "
+                f"be a valid module in the tree {self.root_dir}"
+            )
         loader.load()
         return loader
 
@@ -175,20 +186,23 @@ class ModuleLocation(metaclass=ABCMeta):
         self.module = None
 
     @abstractmethod
-    def category_name(self): raise NotImplementedError
+    def category_name(self):
+        raise NotImplementedError
 
     @abstractmethod
-    def toplevel(self): raise NotImplementedError
+    def toplevel(self):
+        raise NotImplementedError
 
     @abstractmethod
-    def name(self): raise NotImplementedError
+    def name(self):
+        raise NotImplementedError
 
     @abstractmethod
-    def version(self): raise NotImplementedError
+    def version(self):
+        raise NotImplementedError
 
     def available_versions(self):
-        return [v for v in os.listdir(self.module_base()) 
-                if util.valid_version(v)]
+        return [v for v in os.listdir(self.module_base()) if util.valid_version(v)]
 
     def moduledotfile_path(self):
         base = self.module_base()
@@ -207,26 +221,29 @@ class ModuleLocation(metaclass=ABCMeta):
         return os.path.join(self.module_base(), self.version())
 
     def modulefile_base(self):
-        return os.path.join(self.module_tree.modulefile_dir(),
-                            self.category_name(), self.name())
+        return os.path.join(
+            self.module_tree.modulefile_dir(), self.category_name(), self.name()
+        )
 
     def modulefile_path(self):
-        return os.path.join(self.modulefile_base(),
-                            self.version())
+        return os.path.join(self.modulefile_base(), self.version())
 
     def clean(self):
         """Return false if files exist where the module resolves to. Note this 
            does not imply validity or readability"""
-        return not os.path.exists(self.module_path()) and \
-               not os.path.exists(self.modulefile_path())
+        return not os.path.exists(self.module_path()) and not os.path.exists(
+            self.modulefile_path()
+        )
 
     def valid(self):
-        return util.writeable_dir(self.module_base()) and \
-               self.version() is not None and \
-               util.writeable_dir(self.module_path()) and \
-               os.path.exists(self.moduledotfile_path()) and \
-               os.readlink(self.modulefile_path()) == \
-               self.module_tree.master_module_file()
+        return (
+            util.writeable_dir(self.module_base())
+            and self.version() is not None
+            and util.writeable_dir(self.module_path())
+            and os.path.exists(self.moduledotfile_path())
+            and os.readlink(self.modulefile_path())
+            == self.module_tree.master_module_file()
+        )
 
     def path_exists(self, path):
         """Return true if the path that the path object implies already exists."""
@@ -261,7 +278,6 @@ class ModuleLocation(metaclass=ABCMeta):
             shutil.rmtree(self.modulefile_base())
 
 
-
 class ModuleBuilder(ModuleLocation):
     """A module builder class."""
 
@@ -272,16 +288,18 @@ class ModuleBuilder(ModuleLocation):
     def category_name(self):
         return self.module.category or self.module_tree.name
 
-    def toplevel(self): return self.module.toplevel
+    def toplevel(self):
+        return self.module.toplevel
 
-    def name(self): return self.module.name
+    def name(self):
+        return self.module.name
 
-    def version(self): return self.module.version
+    def version(self):
+        return self.module.version
 
     def build(self):
         os.makedirs(os.path.dirname(self.modulefile_path()), exist_ok=True)
-        os.symlink(self.module_tree.master_module_file(),
-                   self.modulefile_path())
+        os.symlink(self.module_tree.master_module_file(), self.modulefile_path())
         os.makedirs(self.module_path())
         self.save_module_file()
 
@@ -302,16 +320,18 @@ class ModuleLoader(ModuleLocation):
         self._version = version
 
     def category_name(self):
-        files = glob(os.path.join(self.module_tree.modulefile_dir(), "*",
-                                  self.name()))
+        files = glob(os.path.join(self.module_tree.modulefile_dir(), "*", self.name()))
         return os.path.basename(os.path.dirname(files[0]))
 
     def toplevel(self):
         return not os.path.exists(
-            os.path.join(self.module_tree.root_dir, self.name(),
-                         self.version(), ".modulefile"))
+            os.path.join(
+                self.module_tree.root_dir, self.name(), self.version(), ".modulefile"
+            )
+        )
 
-    def name(self): return self._name
+    def name(self):
+        return self._name
 
     def version(self):
         if self._version is None:
@@ -324,8 +344,13 @@ class ModuleLoader(ModuleLocation):
 
     def load(self):
         self.module = Module.from_file(
-            self.moduledotfile_path(), self.module_tree, self.name(),
-            self.version(), self.toplevel(), self.category_name())
+            self.moduledotfile_path(),
+            self.module_tree,
+            self.name(),
+            self.version(),
+            self.toplevel(),
+            self.category_name(),
+        )
 
 
 class Path:
@@ -347,9 +372,19 @@ class Path:
 
 
 class Module:
-    def __init__(self, root, name, version, maintainer="no_maintainer",
-                 helptext="", description="", extra_vars=None,
-                 category=None, toplevel=True, extra_commands=None):
+    def __init__(
+        self,
+        root,
+        name,
+        version,
+        maintainer="no_maintainer",
+        helptext="",
+        description="",
+        extra_vars=None,
+        category=None,
+        toplevel=True,
+        extra_commands=None,
+    ):
         """
         Initialize a module.
 
@@ -369,11 +404,29 @@ class Module:
             extra_commands = []
         if extra_vars is None:
             extra_vars = {}
-        (self.root, self.name, self.version, self.maintainer, self.helptext,
-         self.description, self.category, self.toplevel,
-         self.extra_vars, self.extra_commands) = (
-            root, name, version, maintainer, helptext, description,
-            category, toplevel, extra_vars, extra_commands)
+        (
+            self.root,
+            self.name,
+            self.version,
+            self.maintainer,
+            self.helptext,
+            self.description,
+            self.category,
+            self.toplevel,
+            self.extra_vars,
+            self.extra_commands,
+        ) = (
+            root,
+            name,
+            version,
+            maintainer,
+            helptext,
+            description,
+            category,
+            toplevel,
+            extra_vars,
+            extra_commands,
+        )
         self.paths = []
 
     @classmethod
@@ -396,7 +449,9 @@ class Module:
                 else:
                     module.extra_vars.update({fields[1]: fields[2]})
             elif fields[0] == "prepend-path" or fields[0] == "append-path":
-                module.paths.append(Path(path=fields[2], operation=fields[0], name=fields[1]))
+                module.paths.append(
+                    Path(path=fields[2], operation=fields[0], name=fields[1])
+                )
         return module
 
     def remove_path(self, path_obj):
@@ -406,8 +461,7 @@ class Module:
         :param path_obj: a path object to compare to
         :return:
         """
-        self.paths = [p for p in self.paths
-                      if p.path != path_obj.path]
+        self.paths = [p for p in self.paths if p.path != path_obj.path]
 
     def __repr__(self):
         return f"{self.name}-{self.version}"
@@ -415,11 +469,13 @@ class Module:
     def dump(self):
         """Dump the module file as a string"""
 
-        text = f"""set MAINTAINER "{self.maintainer}"
+        text = (
+            f"""set MAINTAINER "{self.maintainer}"
 set HELPTEXT "{self.helptext}"
-set DESCRIPTION "{self.description}"\n""" + \
-               "\n".join([f'set {k} "{v}"'
-                          for k, v in self.extra_vars.items()]) + \
-               "\n\n" + "\n".join(str(p) for p in self.paths) + \
-               "\n"
+set DESCRIPTION "{self.description}"\n"""
+            + "\n".join([f'set {k} "{v}"' for k, v in self.extra_vars.items()])
+            + "\n\n"
+            + "\n".join(str(p) for p in self.paths)
+            + "\n"
+        )
         return text

@@ -6,7 +6,7 @@ from .config import *
 from .module import *
 
 
-EDITOR = os.environ.get('EDITOR', 'vim')
+EDITOR = os.environ.get("EDITOR", "vim")
 
 INTERACT_CLR = Fore.GREEN
 GROUP_CLR = Fore.YELLOW
@@ -26,8 +26,10 @@ class CliCfg:
         """
         result = self.root or self.config.get("root")
         if result is None:
-            raise SystemExit("No module root set. Add it to the configuration "
-                             "or specify it on the commandline")
+            raise SystemExit(
+                "No module root set. Add it to the configuration "
+                "or specify it on the commandline"
+            )
 
         return result
 
@@ -68,10 +70,10 @@ class ModuleDevGroup(click.Group, metaclass=ModuleDevCliMeta):
 
 
 @click.group(cls=ModuleDevGroup)
-@click.option("--maintainer",
-              help="Set the package maintainer, overriding configuration")
-@click.option("--root",
-              help="Set the module root directory, overriding configuration")
+@click.option(
+    "--maintainer", help="Set the package maintainer, overriding configuration"
+)
+@click.option("--root", help="Set the module root directory, overriding configuration")
 @click.pass_context
 def moduledev(ctx, maintainer, root):
     """
@@ -85,8 +87,9 @@ def moduledev(ctx, maintainer, root):
 
 @moduledev.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
 @click.option("--force", is_flag=True, default=False)
-@click.option("--category",
-              help="Set a category for the module (defaults to the repo name)")
+@click.option(
+    "--category", help="Set a category for the module (defaults to the repo name)"
+)
 @click.argument("PACKAGE_NAME")
 @click.argument("VERSION")
 @click.argument("HELPTEXT", default="", required=False)
@@ -116,17 +119,27 @@ def init(ctx, force, package_name, version, helptext, description, category):
     """
     if ctx.obj.maintainer is None:
         if ctx.obj.config.get("maintainer") is None:
-            click.echo("Warning: maintainer not set; defaulting to nomaintainer",
-                       err=True)
+            click.echo(
+                "Warning: maintainer not set; defaulting to nomaintainer", err=True
+            )
             maintainer = "nomaintainer"
         else:
             maintainer = ctx.obj.config.get("maintainer")
     module_tree = ctx.obj.check_module_tree()
-    m = Module(module_tree, package_name, version, maintainer, helptext,
-               description, category=category)
+    m = Module(
+        module_tree,
+        package_name,
+        version,
+        maintainer,
+        helptext,
+        description,
+        category=category,
+    )
     if not module_tree.module_clean(m) and not force:
-        raise SystemExit(f"Some file exist where the module should be "
-                         f"installed. Use --force to overwrite them.")
+        raise SystemExit(
+            f"Some file exist where the module should be "
+            f"installed. Use --force to overwrite them."
+        )
     module_tree.init_module(m, overwrite=force)
 
 
@@ -140,7 +153,7 @@ def remove(ctx, module_name, force, version):
     version is provided."""
     module_tree = ctx.obj.check_module_tree()
     loader = check_module(module_tree, module_name, version)
-    if not force: # pragma: no cover
+    if not force:  # pragma: no cover
         if not util.confirm(f"Really delete {loader.module}? (y/n): ") == "y":
             raise SystemExit("Operation cancelled by user")
     loader.clear()
@@ -168,31 +181,37 @@ def setup(ctx, name):
     used_root = ctx.obj.check_root()
     module_tree = ModuleTree(used_root)
     if not module_tree.can_setup(name):
-        click.secho("Module tree root must be set up in an empty, "
-                    "writeable directory. Change the root location\neither "
-                    "with the --root option or via moduledev config.",
-                    bold=True, fg="red")
+        click.secho(
+            "Module tree root must be set up in an empty, "
+            "writeable directory. Change the root location\neither "
+            "with the --root option or via moduledev config.",
+            bold=True,
+            fg="red",
+        )
         raise SystemExit(" ")
     module_tree.setup(name)
     click.echo("Module repository successfully setup in\n")
     click.secho(f"{used_root}\n", bold=True)
-    click.echo("You can now start using the repository by adding the "
-               "following to your ~/.bashrc (or whatever login scripts "
-               "you use):\n")
+    click.echo(
+        "You can now start using the repository by adding the "
+        "following to your ~/.bashrc (or whatever login scripts "
+        "you use):\n"
+    )
     click.secho(f"module use --append {used_root}/modulefile", bold=True)
     click.secho(f"module use --append {used_root}/modulefile/{name}", bold=True)
-    click.echo("If you haven't already, it would be useful to configure "
-               "a global maintainer and root:\n")
+    click.echo(
+        "If you haven't already, it would be useful to configure "
+        "a global maintainer and root:\n"
+    )
     click.secho(f"moduledev config set root {used_root}", bold=True)
-    click.secho(f"moduledev config set maintainer \"Me <me@me.me>\"\n",
-                bold=True)
+    click.secho(f'moduledev config set maintainer "Me <me@me.me>"\n', bold=True)
     click.echo("Create a new module using ", nl=False)
     click.secho("module init", bold=True, nl=False)
     click.echo("\n")
 
 
 @moduledev.group(cls=ModuleDevGroup, short_help_color=GROUP_CLR)
-def config(): 
+def config():
     """Manage the global configuration."""
     pass
 
@@ -233,16 +252,20 @@ def check_module(module_tree, module_name, version):
 
 
 @path.command()
-@click.option("--action", type=click.Choice(["prepend", "append"]),
-              default="append", show_default=True,
-              help="Prepend or append the evnironment variable")
-@click.option("--version",
-              help="Specify the module version (default to latest)")
-@click.option("--copy", is_flag=True,
-              help="Copy the files contained in the path (default is "
-                   "create a symlink)")
-@click.option("--overwrite", is_flag=True,
-              help="Overwrite an old path if it exists.")
+@click.option(
+    "--action",
+    type=click.Choice(["prepend", "append"]),
+    default="append",
+    show_default=True,
+    help="Prepend or append the evnironment variable",
+)
+@click.option("--version", help="Specify the module version (default to latest)")
+@click.option(
+    "--copy",
+    is_flag=True,
+    help="Copy the files contained in the path (default is " "create a symlink)",
+)
+@click.option("--overwrite", is_flag=True, help="Overwrite an old path if it exists.")
 @click.argument("MODULE_NAME")
 @click.argument("VARIABLE_NAME")
 @click.argument("SRC_PATH")
@@ -256,14 +279,15 @@ def add(ctx, action, version, module_name, variable_name, src_path, copy, overwr
         if overwrite:
             loader.remove_path(path_obj)
         else:
-            raise SystemExit(f"Path {path_obj.path} already exists. "
-                             f"Use --overwrite to force.")
+            raise SystemExit(
+                f"Path {path_obj.path} already exists. " f"Use --overwrite to force."
+            )
     loader.add_path(src_path, path_obj, not copy)
     loader.save_module_file()
 
+
 @path.command()
-@click.option("--version",
-              help="Specify the module version (default to latest)")
+@click.option("--version", help="Specify the module version (default to latest)")
 @click.argument("MODULE_NAME")
 @click.argument("SRC_PATH")
 @click.pass_context
@@ -277,23 +301,24 @@ def remove(ctx, module_name, src_path, version):
 
 
 @path.command()
-@click.option("--version",
-              help="Specify the module version (default to latest)")
+@click.option("--version", help="Specify the module version (default to latest)")
 @click.argument("MODULE_NAME")
 @click.pass_context
 def view(ctx, module_name, version):
     """List all paths in a module"""
     module_tree = ctx.obj.check_module_tree()
     loader = check_module(module_tree, module_name, version)
-    print("\n".join(f"{str(p)} -> {p.resolve(loader.module_path())}"
-                    for p in loader.module.paths))
+    print(
+        "\n".join(
+            f"{str(p)} -> {p.resolve(loader.module_path())}"
+            for p in loader.module.paths
+        )
+    )
 
 
 @moduledev.command(cls=ModuleDevCommand, short_help_color=INTERACT_CLR)
-@click.option("--editor",
-              help="Specify the editor", default=EDITOR, show_default=True)
-@click.option("--version",
-              help="Specify the module version (default to latest)")
+@click.option("--editor", help="Specify the editor", default=EDITOR, show_default=True)
+@click.option("--version", help="Specify the module version (default to latest)")
 @click.argument("MODULE_NAME")
 @click.pass_context
 def edit(ctx, module_name, version, editor):
@@ -304,8 +329,7 @@ def edit(ctx, module_name, version, editor):
 
 
 @moduledev.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
-@click.option("--version",
-              help="Specify the module version (default to latest)")
+@click.option("--version", help="Specify the module version (default to latest)")
 @click.argument("MODULE_NAME")
 @click.pass_context
 def show(ctx, module_name, version):
@@ -316,9 +340,13 @@ def show(ctx, module_name, version):
 
 
 @moduledev.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
-@click.option("--all", "all_versions", is_flag=True,
-              help="Show all versions of each module (default is to show "
-                   "the current version only)")
+@click.option(
+    "--all",
+    "all_versions",
+    is_flag=True,
+    help="Show all versions of each module (default is to show "
+    "the current version only)",
+)
 @click.pass_context
 def list(ctx, all_versions):
     """Show all available modules"""
@@ -328,8 +356,7 @@ def list(ctx, all_versions):
 
 
 @moduledev.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
-@click.option("--version",
-              help="Specify the module version (default to latest)")
+@click.option("--version", help="Specify the module version (default to latest)")
 @click.argument("MODULE_NAME")
 @click.pass_context
 def location(ctx, module_name, version):
@@ -338,5 +365,6 @@ def location(ctx, module_name, version):
     loader = check_module(module_tree, module_name, version)
     click.echo(loader.module_path())
 
-#if __name__ == "__main__":
-    #moduledev()
+
+# if __name__ == "__main__":
+# moduledev()

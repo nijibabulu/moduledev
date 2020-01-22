@@ -3,6 +3,7 @@ import re
 import click
 import itertools
 
+
 def writeable_dir(path):
     """return true if a directory exists and is writeable"""
     return os.path.exists(path) and os.path.isdir(path) and os.access(path, os.W_OK)
@@ -22,7 +23,7 @@ def parse_version_token(s):
        It is accepted to have a number, a character or a number followed by a
        character, e.g. "5" -> ["5"], "a" -> ["a"] or "5a" -> ["5", "a"] are 
        acceptable."""
-    if len(s) > 1 and s[-1].isalpha() :
+    if len(s) > 1 and s[-1].isalpha():
         return [s[:-1], s[-1]]
     else:
         return [s]
@@ -30,8 +31,8 @@ def parse_version_token(s):
 
 def tokenize_version(version_string):
     return itertools.chain.from_iterable(
-        parse_version_token(t)
-        for t in re.split('[.\-]', version_string))
+        parse_version_token(t) for t in re.split("[.\-]", version_string)
+    )
 
 
 def version_key(version_string):
@@ -60,7 +61,7 @@ def valid_version(version_string):
     return True
 
 
-def confirm(question, choices=['y','n']): # pragma: no cover
+def confirm(question, choices=["y", "n"]):  # pragma: no cover
     """
     return the answer to the question from the terminal and constrain the
     answer to be in the choices.
@@ -70,9 +71,8 @@ def confirm(question, choices=['y','n']): # pragma: no cover
     """
     answer = ""
     while True:
-       answer = input(question)
-       if answer in choices:
-           return answer
-       else:
-           click.secho("Please answer one of " + ", ".join(choices), bold=True)
-
+        answer = input(question)
+        if answer in choices:
+            return answer
+        else:
+            click.secho("Please answer one of " + ", ".join(choices), bold=True)

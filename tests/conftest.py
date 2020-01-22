@@ -11,17 +11,17 @@ def runner(tmpdir):
 
 @pytest.fixture
 def empty_config(tmpdir):
-    cfg = moduledev.Config(_filename = tmpdir / "config.yaml")
+    cfg = moduledev.Config(_filename=tmpdir / "config.yaml")
     return cfg
 
 
 @pytest.fixture
 def example_config(tmpdir):
-    cfg = moduledev.Config(_filename = tmpdir / "config.yaml")
-    cfg.set("maintainer","Example <example@example.com>")
-    cfg.set("package_name","package")
-    cfg.set("helptext","some help")
-    cfg.set("description","a description")
+    cfg = moduledev.Config(_filename=tmpdir / "config.yaml")
+    cfg.set("maintainer", "Example <example@example.com>")
+    cfg.set("package_name", "package")
+    cfg.set("helptext", "some help")
+    cfg.set("description", "a description")
     return cfg
 
 
@@ -49,12 +49,14 @@ def bindir(tmpdir):
 
 @pytest.fixture
 def example_module(example_module_tree):
-    module = moduledev.Module(root=example_module_tree,
-                              name="test",
-                              version="1.0",
-                              maintainer="Test Maintainer <test@test.com>",
-                              helptext="A test module",
-                              description="The description of a test module")
+    module = moduledev.Module(
+        root=example_module_tree,
+        name="test",
+        version="1.0",
+        maintainer="Test Maintainer <test@test.com>",
+        helptext="A test module",
+        description="The description of a test module",
+    )
     return module
 
 

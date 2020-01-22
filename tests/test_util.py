@@ -19,5 +19,6 @@ def test_writeable_dir(tmpdir):
     os.chmod(tmpdir / "test", stat.S_IRUSR)
     assert moduledev.writeable_dir(tmpdir / "test") == False
 
+
 def test_valid_version():
     assert moduledev.valid_version("b1.0") == False

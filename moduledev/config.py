@@ -2,6 +2,7 @@ import yaml
 import click
 import os
 
+
 class Config:
     def __init__(self, _filename=None):
         """Initialize a configuration object.
@@ -15,7 +16,9 @@ class Config:
 
     def filename(self):
         """The location of the configuration file."""
-        return self._filename or os.path.join(click.get_app_dir("moduledev"), "config.yaml")
+        return self._filename or os.path.join(
+            click.get_app_dir("moduledev"), "config.yaml"
+        )
 
     def _open(self):
         """
@@ -34,7 +37,7 @@ class Config:
             self._f = open(config_file, "w")
         except Exception as e:
             raise SystemExit(f"Could not open {config_file} for writing: {e}")
-        
+
     def _load(self):
         """ 
         Load the configuration from the user home path if it exists. Exits with 
@@ -53,7 +56,7 @@ class Config:
         except yaml.YAMLError as exc:
             raise SystemExit(f"Error loading config file {config_file}:\n{exc}")
         self._f.close()
-     
+
     def get(self, key=None):
         if key is not None:
             cfg = self.config.get(key, None)
@@ -87,4 +90,3 @@ class Config:
     def set(self, setting, value):
         """set something in the configuration."""
         self.config[setting] = value
-
