@@ -1,10 +1,10 @@
-import click
 from subprocess import call
+
+import click
 from colorama import Fore, Style
 
 from .config import *
 from .module import *
-
 
 EDITOR = os.environ.get("EDITOR", "vim")
 

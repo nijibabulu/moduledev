@@ -1,7 +1,9 @@
-import pytest
-import shutil
-import moduledev
 import os
+import shutil
+
+import pytest
+
+import moduledev
 
 
 def test_empty_module_tree(empty_module_tree):

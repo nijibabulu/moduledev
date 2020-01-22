@@ -1,8 +1,9 @@
 import os
 import shlex
 import shutil
-from glob import glob
 from abc import ABCMeta, abstractmethod
+from glob import glob
+
 from . import util
 
 _modulefile_template = """#%%Module1.0

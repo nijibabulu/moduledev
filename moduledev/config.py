@@ -1,6 +1,7 @@
-import yaml
-import click
 import os
+
+import click
+import yaml
 
 
 class Config:

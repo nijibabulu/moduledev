@@ -1,6 +1,8 @@
-import pytest
 import os
+
 import click
+import pytest
+
 import moduledev
 
 

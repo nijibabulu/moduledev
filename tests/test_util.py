@@ -1,6 +1,8 @@
-import pytest
 import os
 import stat
+
+import pytest
+
 import moduledev
 
 

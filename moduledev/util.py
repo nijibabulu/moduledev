@@ -1,7 +1,8 @@
+import itertools
 import os
 import re
+
 import click
-import itertools
 
 
 def writeable_dir(path):
