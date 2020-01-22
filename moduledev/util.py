@@ -1,5 +1,6 @@
 import os
 import re
+import click
 import itertools
 
 def writeable_dir(path):
@@ -57,3 +58,21 @@ def valid_version(version_string):
         except:
             return False
     return True
+
+
+def confirm(question, choices=['y','n']): # pragma: no cover
+    """
+    return the answer to the question from the terminal and constrain the
+    answer to be in the choices.
+
+    :param question: a string with the question
+    :param choices: possible answers to the question
+    """
+    answer = ""
+    while True:
+       answer = input(question)
+       if answer in choices:
+           return answer
+       else:
+           click.secho("Please answer one of " + ", ".join(choices), bold=True)
+
