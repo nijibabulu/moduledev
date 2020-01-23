@@ -130,6 +130,16 @@ def test_path_add(runner, tmpdir, root):
     )
 
 
+def test_path_add_notexists(runner, tmpdir, root):
+    setup_basic_package(runner, root)
+    result = runner.invoke(
+        mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin")]
+    )
+    assert result.exit_code != 0
+    assert type(result.exception) == SystemExit
+    assert "does not exist" in str(result.exception)
+
+
 def test_path_add_nomodule(runner, tmpdir, root):
     runner.invoke(mdcli, ["config", "set", "root", str(root)])
     runner.invoke(mdcli, ["setup", "test"])
