@@ -139,6 +139,23 @@ def test_save_path(example_builder, bindir):
     binpath = moduledev.Path("bin", "prepend-path", "PATH")
     example_builder.add_path(bindir, binpath)
     example_builder.save_module_file()
+    dotfile_text = "\n".join(open(example_builder.moduledotfile_path()).readlines())
+    assert example_builder.path_exists(binpath) == True
+    assert "bin" in dotfile_text
+    assert "PATH" in dotfile_text
+
+
+def test_save_path(example_builder, bindir):
+    binpath = moduledev.Path("bin", "prepend-path", "PATH")
+    example_builder.add_path(bindir, binpath)
+    example_builder.save_module_file()
+
+    example_builder.remove_path(binpath)
+    example_builder.save_module_file()
+    dotfile_text = "\n".join(open(example_builder.moduledotfile_path()).readlines())
+    assert example_builder.path_exists(binpath) == False
+    assert "bin" not in dotfile_text
+    assert "PATH" not in dotfile_text
 
 
 def test_extra_commands(example_module, example_module_tree):
