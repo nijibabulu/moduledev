@@ -66,20 +66,3 @@ def raise_value_error(err):
     """The default error handler for parse errors. Raises a value error with
     the given error string"""
     raise ValueError(err)
-
-
-def confirm(question, choices=["y", "n"]):  # pragma: no cover
-    """
-    return the answer to the question from the terminal and constrain the
-    answer to be in the choices.
-
-    :param question: a string with the question
-    :param choices: possible answers to the question
-    """
-    answer = ""
-    while True:
-        answer = input(question)
-        if answer in choices:
-            return answer
-        else:
-            click.secho("Please answer one of " + ", ".join(choices), bold=True)

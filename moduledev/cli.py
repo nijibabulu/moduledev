@@ -4,7 +4,7 @@ from subprocess import call
 import click
 from colorama import Fore, Style
 
-from . import Config, Module, ModuleTree, Path, confirm
+from . import Config, Module, ModuleTree, Path
 
 EDITOR = os.environ.get("EDITOR", "vim")
 
@@ -154,7 +154,7 @@ def rm(ctx, module_name, force, version):
     module_tree = ctx.obj.check_module_tree()
     loader = check_module(module_tree, module_name, version)
     if not force:  # pragma: no cover
-        if not confirm(f"Really delete {loader.module}? (y/n): ") == "y":
+        if not click.confirm(f"Really delete {loader.module}?  "):
             raise SystemExit("Operation cancelled by user")
     loader.clear()
 
