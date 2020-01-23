@@ -62,6 +62,12 @@ def valid_version(version_string):
     return True
 
 
+def raise_value_error(err):
+    """The default error handler for parse errors. Raises a value error with
+    the given error string"""
+    raise ValueError(err)
+
+
 def confirm(question, choices=["y", "n"]):  # pragma: no cover
     """
     return the answer to the question from the terminal and constrain the

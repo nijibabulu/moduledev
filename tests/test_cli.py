@@ -197,7 +197,6 @@ def test_path_remove(runner, tmpdir, root):
     result = runner.invoke(
         mdcli, ["path", "remove", "package", "bintest"], catch_exceptions=False,
     )
-    print(result.output)
     assert result.exit_code == 0
     assert not os.path.exists(root / "package" / "1.0" / "bintest")
     assert not "bin" in "\n".join(open(root / "package" / ".modulefile").readlines())
@@ -208,6 +207,30 @@ def test_path_view(runner, tmpdir, root):
     result = runner.invoke(mdcli, ["path", "view", "package"])
     assert result.exit_code == 0
     assert "bin" in result.output
+
+
+def test_path_add_unparseable_file(runner, tmpdir, root):
+    setup_path_package(runner, tmpdir, root)
+    with open(root / "package" / ".modulefile", "a") as f:
+        f.write('unparseable "line\n')
+    os.mkdir(tmpdir / "unwriteabletest")
+    result = runner.invoke(
+        mdcli, ["path", "add", "package", "PATH", str(tmpdir / "unwriteabletest")]
+    )
+    assert result.exit_code == 1
+    assert type(result.exception) == SystemExit
+    assert "parse error" in result.output
+
+
+def test_path_view_unparseable_file(runner, tmpdir, root):
+    setup_path_package(runner, tmpdir, root)
+    with open(root / "package" / ".modulefile", "a") as f:
+        f.write('unparseable "line\n')
+    os.mkdir(tmpdir / "unwriteabletest")
+    result = runner.invoke(mdcli, ["path", "view", "package"])
+    print(result.output)
+    assert result.exit_code == 0
+    assert "parse error" in result.output
 
 
 def test_edit(runner, root):

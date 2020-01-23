@@ -238,17 +238,36 @@ def path():
     pass
 
 
-def check_module(module_tree, module_name, version):
+def log_error(err):
+    click.secho(err, fg="red", err=True)
+
+
+def log_error_and_wait_for_confirmation(err):  # pragma: no cover
+    log_error(err)
+    click.pause(err=True)
+
+
+def log_error_and_exit(err):
+    log_error(err)
+    raise ValueError
+
+
+def check_module(module_tree, module_name, version, parse_error_handler=log_error):
     """
     Check for the presence of a module on the module tree and return it if it
     exists. If it does not exist, inform the user and exit.
     """
+
     if not module_tree.module_exists(module_name, version):
         module_display = f"{module_name}"
         if version is not None:
             module_display += f"-{version}"
         raise SystemExit(f"Module {module_display} does not exist.")
-    return module_tree.load_module(module_name, version)
+    try:
+        loader = module_tree.load_module(module_name, version, parse_error_handler)
+    except ValueError as e:
+        raise SystemExit(f"Error loading module: {e}")
+    return loader
 
 
 @path.command()
@@ -275,7 +294,9 @@ def add(ctx, action, version, module_name, variable_name, src_path, copy, overwr
     if not os.path.exists(src_path):
         raise SystemExit(f"Cannot add path: source path {src_path} does not exist.")
     module_tree = ctx.obj.check_module_tree()
-    loader = check_module(module_tree, module_name, version)
+    loader = check_module(
+        module_tree, module_name, version, parse_error_handler=log_error_and_exit
+    )
     path_obj = Path(src_path, f"{action}-path", variable_name)
     if loader.path_exists(path_obj):
         if overwrite:
@@ -296,7 +317,9 @@ def add(ctx, action, version, module_name, variable_name, src_path, copy, overwr
 def remove(ctx, module_name, src_path, version):
     """Remove a path from a module"""
     module_tree = ctx.obj.check_module_tree()
-    loader = check_module(module_tree, module_name, version)
+    loader = check_module(
+        module_tree, module_name, version, parse_error_handler=log_error_and_exit
+    )
     path_obj = Path(src_path)
     loader.remove_path(path_obj)
     loader.save_module_file()
@@ -326,7 +349,9 @@ def view(ctx, module_name, version):
 def edit(ctx, module_name, version, editor):
     """Edit the module file for a package"""
     module_tree = ctx.obj.check_module_tree()
-    loader = check_module(module_tree, module_name, version)
+    loader = check_module(
+        module_tree, module_name, version, log_error_and_wait_for_confirmation
+    )
     call([editor, loader.moduledotfile_path()])
 
 

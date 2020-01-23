@@ -161,10 +161,18 @@ class ModuleTree:
         loader = ModuleLoader(self, name, version)
         return loader.valid()
 
-    def load_module(self, name, version=None):
+    def load_module(
+        self, name, version=None, parse_error_handler=util.raise_value_error
+    ):
         """
         Locate and parse the module from the filesystem identified by the
         given name and version.
+
+        :param name: the name of the module
+        :param version: the version of the module. if none is provided, the
+            latest is loaded
+        :param parse_error_handler: a function which handles parse error
+            messages. If none is provided, an exception is raised.
 
         :return: a ModuleLoder used to load the module.
         """
@@ -174,7 +182,7 @@ class ModuleTree:
                 f"Module {name}-{version} does not appear to "
                 f"be a valid module in the tree {self.root_dir}"
             )
-        loader.load()
+        loader.load(parse_error_handler)
         return loader
 
 
@@ -343,7 +351,7 @@ class ModuleLoader(ModuleLocation):
         else:
             return self._version
 
-    def load(self):
+    def load(self, error_handler=util.raise_value_error):
         self.module = Module.from_file(
             self.moduledotfile_path(),
             self.module_tree,
@@ -351,6 +359,7 @@ class ModuleLoader(ModuleLocation):
             self.version(),
             self.toplevel(),
             self.category_name(),
+            error_handler,
         )
 
 
@@ -419,16 +428,42 @@ class Module:
         self.paths = []
 
     @classmethod
-    def from_file(cls, filename, root, name, version, toplevel, category=None):
-        """parse a module file"""
+    def from_file(
+        cls,
+        filename,
+        root,
+        name,
+        version,
+        toplevel,
+        category=None,
+        error_handler=util.raise_value_error,
+    ):
+        """parse a module file
+
+        :param filename: the path to the module dotfile
+        :param name: the package name for the module
+        :param version: the version of the module:
+        :param toplevel: whether the moduledotfile is located at the toplevel
+        :param category: the category of the module
+        :param error_handler: a which handles any parse errors during parsing.
+            If there is a parse error and a handler is provided, the line is
+            not interpreted and error handler is called. The default handler
+            raises a value error with the given error message.
+
+        :return: a new module parsed from the given file
+        """
         module = cls(root, name, version, toplevel=toplevel, category=category)
         for line in open(filename):
-            fields = shlex.split(line.strip())
+            try:
+                fields = shlex.split(line.strip())
+            except ValueError as e:
+                error_handler(f"parse error in {filename}: {e}")
+                continue
             if len(fields) == 0:
                 continue
             if fields[0] == "set":
                 if len(fields) < 3:
-                    raise ValueError(f"Unparsable line in {filename}:\n{line}")
+                    error_handler(f"Unparsable line in {filename}:\n{line}")
                 if fields[1] == "MAINTAINER":
                     module.maintainer = fields[2]
                 elif fields[1] == "HELPTEXT":
