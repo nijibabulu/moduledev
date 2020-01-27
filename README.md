@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.com/nijibabulu/moduledev.svg?branch=master)](https://travis-ci.com/nijibabulu/moduledev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Coverage Status](https://codecov.io/gh/nijibabulu/moduledev/branch/master/graph/badge.svg)](https://codecov.io/gh/nijibabulu/moduledev)
+[![Coverage Status](https://img.shields.io/codecov/c/github/nijibabulu/moduledev)](https://codecov.io/gh/nijibabulu/moduledev)
 
 # moduledev
 
