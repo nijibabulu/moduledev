@@ -128,6 +128,20 @@ def test_empty_path(example_module, example_module_tree):
     assert builder.path_exists(fakepath) == False
 
 
+def test_path_trailing_slash(example_module, example_module_tree):
+    path_obj = moduledev.Path("test/")
+    assert "/" != path_obj.path[-1]
+
+
+def test_save_path_trailing_slash(example_builder, bindir):
+    binpath = moduledev.Path("bin/", "prepend-path", "PATH")
+    example_builder.add_path(bindir, binpath)
+    example_builder.save_module_file()
+    dotfile_text = "\n".join(open(example_builder.moduledotfile_path()).readlines())
+    assert example_builder.path_exists(binpath) == True
+    assert "/" != binpath.resolve(example_builder.module_path())[-1]
+
+
 def test_add_path(example_module, example_module_tree, bindir):
     builder = example_module_tree.init_module(example_module)
     binpath = moduledev.Path("bin", "prepend-path", "PATH")
@@ -145,7 +159,7 @@ def test_save_path(example_builder, bindir):
     assert "PATH" in dotfile_text
 
 
-def test_save_path(example_builder, bindir):
+def test_remove_path(example_builder, bindir):
     binpath = moduledev.Path("bin", "prepend-path", "PATH")
     example_builder.add_path(bindir, binpath)
     example_builder.save_module_file()
