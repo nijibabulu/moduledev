@@ -371,7 +371,7 @@ class Path:
         if "$basedir" in path:
             self.path = path
         else:
-            self.path = os.path.join("$basedir", os.path.basename(path))
+            self.path = os.path.join("$basedir", os.path.basename(path.rstrip("/")))
 
     def __repr__(self):
         return f"{self.operation} {self.name} {self.path}"

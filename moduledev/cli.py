@@ -125,14 +125,21 @@ def init(ctx, force, package_name, version, helptext, description, category):
             maintainer = "nomaintainer"
         else:
             maintainer = ctx.obj.config.get("maintainer")
+
+    def check_string_for_newlines(name, string):
+        if "\n" in string:
+            click.echo(f"Newlines not allowed in {name}. Replacing with spaces", 
+                       )
+        return string.replace("\n", " ")
+
     module_tree = ctx.obj.check_module_tree()
     m = Module(
         module_tree,
         package_name,
         version,
-        maintainer,
-        helptext,
-        description,
+        check_string_for_newlines("maintainer", maintainer),
+        check_string_for_newlines("helptext", helptext),
+        check_string_for_newlines("description", description),
         category=category,
     )
     if not module_tree.module_clean(m) and not force:

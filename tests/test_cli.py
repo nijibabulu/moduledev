@@ -33,8 +33,6 @@ def test_no_root(runner):
 
 def test_setup_bad_root(runner, root):
     result = runner.invoke(mdcli, ["--root", root / "nonexistentdir", "setup", "test"])
-    print(result.output)
-    print(result.exception)
     assert type(result.exception) == SystemExit
 
 
@@ -42,6 +40,32 @@ def test_no_setup(runner, root):
     result = runner.invoke(mdcli, ["--root", root, "init", "package", "1.0"])
     assert type(result.exception) == SystemExit
     assert "moduledev setup" in str(result.exception)
+
+
+def test_newlines_in_info_strings(runner, root):
+    runner.invoke(mdcli, ["--root", root, "setup", "test"])
+    result = runner.invoke(mdcli, ["--root", root, "init", "package", "1.0",
+                                   "helptext\ntoolong"])
+    assert "Newlines not allowed" in result.output
+    assert result.exit_code == 0
+    result = runner.invoke(mdcli, ["--root", root, "show", "package"])
+    assert result.exit_code == 0
+    assert "parse error" not in result.output
+    assert "toolong" in result.output
+
+
+    runner.invoke(mdcli, ["--root", root, "setup", "test"])
+    result = runner.invoke(mdcli, ["--root", root, "init", "package2", "1.0",
+                                   "helptext" "description\ntoolong"])
+    assert "Newlines not allowed" in result.output
+    assert result.exit_code == 0
+    result = runner.invoke(mdcli, ["--root", root, "show", "package2"])
+    assert result.exit_code == 0
+    assert "parse error" not in result.output
+    assert "toolong" in result.output
+
+
+
 
 
 def test_maintainer_in_config(runner, tmpdir, root):
