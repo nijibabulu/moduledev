@@ -4,7 +4,7 @@ from subprocess import call
 import click
 from colorama import Fore, Style
 
-from . import Config, Module, ModuleTree, Path
+from . import Config, Module, ModuleTree, Path, util
 
 EDITOR = os.environ.get("EDITOR", "vim")
 
@@ -131,6 +131,13 @@ def init(ctx, force, package_name, version, helptext, description, category):
             click.secho(f"Newlines not allowed in {name}. Replacing with spaces", 
                        fg="red")
         return string.replace("\n", " ")
+
+    if not util.valid_version(version):
+        click.secho(f"\"{version}\" is not a valid version. Versions may "
+                    f"contain tokens separated by .s and -s. Tokens may contain" 
+                    f"a number, a character, or a number followed by a character",
+                    fg="red")
+        raise SystemExit("")
 
     module_tree = ctx.obj.check_module_tree()
     m = Module(

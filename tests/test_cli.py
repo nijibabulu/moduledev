@@ -73,7 +73,11 @@ def test_newlines_in_info_strings(runner, root):
     assert "toolong" in result.output
 
 
-
+def test_bad_version(runner, root):
+    runner.invoke(mdcli, ["--root", root, "setup", "test"])
+    result = runner.invoke(mdcli, ["--root", root, "init", "package", "b1.0"])
+    assert "not a valid version" in result.output 
+    assert type(result.exception) == SystemExit
 
 
 def test_maintainer_in_config(runner, tmpdir, root):
