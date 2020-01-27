@@ -128,8 +128,8 @@ def init(ctx, force, package_name, version, helptext, description, category):
 
     def check_string_for_newlines(name, string):
         if "\n" in string:
-            click.echo(f"Newlines not allowed in {name}. Replacing with spaces", 
-                       )
+            click.secho(f"Newlines not allowed in {name}. Replacing with spaces", 
+                       fg="red")
         return string.replace("\n", " ")
 
     module_tree = ctx.obj.check_module_tree()
