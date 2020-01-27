@@ -24,3 +24,10 @@ def test_writeable_dir(tmpdir):
 
 def test_valid_version():
     assert moduledev.valid_version("b1.0") == False
+
+
+def test_package_name():
+    assert moduledev.valid_package_name("abc1234") == True
+    assert moduledev.valid_package_name("abc1234 ") == False
+    assert moduledev.valid_package_name("abc1234-") == False
+    assert moduledev.valid_package_name("abc*&%^*&%1234-") == False

@@ -139,6 +139,12 @@ def init(ctx, force, package_name, version, helptext, description, category):
                     fg="red")
         raise SystemExit("")
 
+    if not util.valid_package_name(package_name):
+        click.secho(f"\"{package_name}\" is not a valid package name. Package names "
+                    f"may contain only alphanumeric characters and underscores.",
+                    fg="red")
+        raise SystemExit("")
+
     module_tree = ctx.obj.check_module_tree()
     m = Module(
         module_tree,

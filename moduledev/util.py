@@ -62,6 +62,10 @@ def valid_version(version_string):
     return True
 
 
+def valid_package_name(name):
+    return re.search(r"[^a-zA-Z0-9_]", name) is None
+
+
 def raise_value_error(err):
     """The default error handler for parse errors. Raises a value error with
     the given error string"""

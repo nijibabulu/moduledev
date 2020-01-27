@@ -80,6 +80,21 @@ def test_bad_version(runner, root):
     assert type(result.exception) == SystemExit
 
 
+def test_bad_package_name(runner, root):
+    runner.invoke(mdcli, ["--root", root, "setup", "test"])
+    result1 = runner.invoke(mdcli, ["--root", root, "init", "abc1234 ", "1.0"])
+    result2 = runner.invoke(mdcli, ["--root", root, "init", "abc1234-", "1.0"])
+    result3 = runner.invoke(mdcli, ["--root", root, "init", "abc*&%^*&%1234-", "1.0"])
+
+    assert type(result1.exception) == SystemExit
+    assert type(result2.exception) == SystemExit
+    assert type(result3.exception) == SystemExit
+
+    assert "not a valid package" in result1.output
+    assert "not a valid package" in result2.output
+    assert "not a valid package" in result3.output
+
+
 def test_maintainer_in_config(runner, tmpdir, root):
     runner.invoke(mdcli, ["--root", root, "setup", "test"])
     runner.invoke(mdcli, ["config", "set", "maintainer", "testmaintainer"])
