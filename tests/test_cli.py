@@ -73,6 +73,17 @@ def test_newlines_in_info_strings(runner, root):
     assert "toolong" in result.output
 
 
+def test_trailing_shash(runner, tmpdir, root):
+    runner.invoke(mdcli, ["config", "set", "root", str(root)])
+    runner.invoke(mdcli, ["setup", "test"])
+    runner.invoke(mdcli, ["init", "package", "1.0"])
+    os.mkdir(tmpdir / "bin")
+    result = runner.invoke(
+        mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin/")]
+    )
+    assert result.exit_code == 0
+    assert os.path.exists(tmpdir / "test" / "package" / "1.0" / "bin")
+
 def test_bad_version(runner, root):
     runner.invoke(mdcli, ["--root", root, "setup", "test"])
     result = runner.invoke(mdcli, ["--root", root, "init", "package", "b1.0"])
