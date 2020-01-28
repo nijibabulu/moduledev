@@ -96,10 +96,12 @@ class ModuleTree:
                 "module tree that has not been setup"
             )
         for m in self.module_names():
-            loader = self.load_module(m)
+            loader = self.load_module(m, parse_error_handler=util.ignore_error)
             if all_versions:
                 for v in loader.available_versions():
-                    version_loader = self.load_module(m, v)
+                    version_loader = self.load_module(
+                        m, v, parse_error_handler=util.ignore_error
+                    )
                     yield version_loader.module
             else:
                 yield loader.module

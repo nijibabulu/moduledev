@@ -66,6 +66,11 @@ def valid_package_name(name):
     return re.search(r"[^a-zA-Z0-9_-]", name) is None
 
 
+def ignore_error(err):
+    """Ignore an error"""
+    pass
+
+
 def raise_value_error(err):
     """The default error handler for parse errors. Raises a value error with
     the given error string"""

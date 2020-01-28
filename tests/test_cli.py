@@ -317,9 +317,17 @@ def test_path_view_unparseable_file(runner, tmpdir, root):
         f.write('unparseable "line\n')
     os.mkdir(tmpdir / "unwriteabletest")
     result = runner.invoke(mdcli, ["path", "view", "package"])
-    print(result.output)
     assert result.exit_code == 0
     assert "parse error" in result.output
+
+
+def test_list_with_unparseable_file(runner, tmpdir, root):
+    setup_path_package(runner, tmpdir, root)
+    with open(root / "package" / ".modulefile", "a") as f:
+        f.write('unparseable "line\n')
+    os.mkdir(tmpdir / "unwriteabletest")
+    result = runner.invoke(mdcli, ["list"])
+    assert result.exit_code == 0
 
 
 def test_edit(runner, root):
