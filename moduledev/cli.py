@@ -128,21 +128,26 @@ def init(ctx, force, package_name, version, helptext, description, category):
 
     def check_string_for_newlines(name, string):
         if "\n" in string:
-            click.secho(f"Newlines not allowed in {name}. Replacing with spaces", 
-                       fg="red")
+            click.secho(
+                f"Newlines not allowed in {name}. Replacing with spaces", fg="red"
+            )
         return string.replace("\n", " ")
 
     if not util.valid_version(version):
-        click.secho(f"\"{version}\" is not a valid version. Versions may "
-                    f"contain tokens separated by .s and -s. Tokens may contain" 
-                    f"a number, a character, or a number followed by a character",
-                    fg="red")
+        click.secho(
+            f'"{version}" is not a valid version. Versions may '
+            f"contain tokens separated by .s and -s. Tokens may contain"
+            f"a number, a character, or a number followed by a character",
+            fg="red",
+        )
         raise SystemExit("")
 
     if not util.valid_package_name(package_name):
-        click.secho(f"\"{package_name}\" is not a valid package name. Package names "
-                    f"may contain only alphanumeric characters and underscores.",
-                    fg="red")
+        click.secho(
+            f'"{package_name}" is not a valid package name. Package names '
+            f"may contain only alphanumeric characters and underscores.",
+            fg="red",
+        )
         raise SystemExit("")
 
     module_tree = ctx.obj.check_module_tree()
