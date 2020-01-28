@@ -27,7 +27,6 @@ def test_valid_version():
 
 
 def test_package_name():
-    assert moduledev.valid_package_name("abc1234") == True
+    assert moduledev.valid_package_name("abc1234-_") == True
     assert moduledev.valid_package_name("abc1234 ") == False
-    assert moduledev.valid_package_name("abc1234-") == False
-    assert moduledev.valid_package_name("abc*&%^*&%1234-") == False
+    assert moduledev.valid_package_name("abc*&%^*&%1234") == False

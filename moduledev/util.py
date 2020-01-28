@@ -63,7 +63,7 @@ def valid_version(version_string):
 
 
 def valid_package_name(name):
-    return re.search(r"[^a-zA-Z0-9_]", name) is None
+    return re.search(r"[^a-zA-Z0-9_-]", name) is None
 
 
 def raise_value_error(err):
