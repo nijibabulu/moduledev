@@ -69,7 +69,7 @@ class ModuleTree:
 
     def exists(self):
         """Return true if the root directory exists"""
-        return os.path.exists(self.root_dir)
+        return os.path.lexists(self.root_dir)
 
     def valid(self):
         """
@@ -256,7 +256,7 @@ class ModuleLocation(metaclass=ABCMeta):
 
     def path_exists(self, path):
         """Return true if the path that the path object implies already exists."""
-        return os.path.exists(path.resolve(self.module_path()))
+        return os.path.lexists(path.resolve(self.module_path()))
 
     def add_path(self, source, path_obj, link=True):
         """Copy or link the contents of the source path to the path implied

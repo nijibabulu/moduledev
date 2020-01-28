@@ -44,8 +44,9 @@ def test_no_setup(runner, root):
 
 def test_newlines_in_info_strings(runner, root):
     runner.invoke(mdcli, ["--root", root, "setup", "test"])
-    result = runner.invoke(mdcli, ["--root", root, "init", "package", "1.0",
-                                   "helptext\ntoolong"])
+    result = runner.invoke(
+        mdcli, ["--root", root, "init", "package", "1.0", "helptext\ntoolong"]
+    )
     assert "Newlines not allowed" in result.output
     assert result.exit_code == 0
     result = runner.invoke(mdcli, ["--root", root, "show", "package"])
@@ -53,9 +54,18 @@ def test_newlines_in_info_strings(runner, root):
     assert "parse error" not in result.output
     assert "toolong" in result.output
 
-
-    result = runner.invoke(mdcli, ["--root", root, "init", "packagedesc", "1.0",
-                                   "helptext", "description\ntoolong"])
+    result = runner.invoke(
+        mdcli,
+        [
+            "--root",
+            root,
+            "init",
+            "packagedesc",
+            "1.0",
+            "helptext",
+            "description\ntoolong",
+        ],
+    )
     assert "Newlines not allowed" in result.output
     assert result.exit_code == 0
     result = runner.invoke(mdcli, ["--root", root, "show", "packagedesc"])
@@ -84,10 +94,30 @@ def test_trailing_shash(runner, tmpdir, root):
     assert result.exit_code == 0
     assert os.path.exists(tmpdir / "test" / "package" / "1.0" / "bin")
 
+
+def test_broken_link(runner, root, tmpdir):
+    # this has a problem with a broken link because path_exists returns false
+    # when it uses os.path.exists() under the hood.
+    runner.invoke(mdcli, ["config", "set", "root", str(root)])
+    runner.invoke(mdcli, ["setup", "test"])
+    runner.invoke(mdcli, ["init", "package", "1.0"])
+    os.mkdir(tmpdir / "bin")
+    runner.invoke(mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin")])
+    os.rmdir(tmpdir / "bin")
+    os.makedirs(tmpdir / "b" / "bin")
+    result = runner.invoke(
+        mdcli,
+        ["path", "add", "--overwrite", "package", "PATH", str(tmpdir / "b" / "bin")],
+    )
+
+    assert result.exit_code == 0
+    assert os.path.exists(tmpdir / "test" / "package" / "1.0" / "bin")
+
+
 def test_bad_version(runner, root):
     runner.invoke(mdcli, ["--root", root, "setup", "test"])
     result = runner.invoke(mdcli, ["--root", root, "init", "package", "b1.0"])
-    assert "not a valid version" in result.output 
+    assert "not a valid version" in result.output
     assert type(result.exception) == SystemExit
 
 
