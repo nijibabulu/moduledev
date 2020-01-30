@@ -1,8 +1,6 @@
 import os
 import stat
 
-import pytest
-
 import moduledev
 
 
@@ -13,20 +11,20 @@ def test_version_key():
 
 
 def test_writeable_dir(tmpdir):
-    assert moduledev.writeable_dir(tmpdir / "test") == False
+    assert not moduledev.writeable_dir(tmpdir / "test")
     with open(tmpdir / "file", "w") as f:
         f.write("text")
-    assert moduledev.writeable_dir(tmpdir / "file") == False
+    assert not moduledev.writeable_dir(tmpdir / "file")
     os.mkdir(tmpdir / "test")
     os.chmod(tmpdir / "test", stat.S_IRUSR)
-    assert moduledev.writeable_dir(tmpdir / "test") == False
+    assert not moduledev.writeable_dir(tmpdir / "test")
 
 
 def test_valid_version():
-    assert moduledev.valid_version("b1.0") == False
+    assert not moduledev.valid_version("b1.0")
 
 
 def test_package_name():
-    assert moduledev.valid_package_name("abc1234-_") == True
-    assert moduledev.valid_package_name("abc1234 ") == False
-    assert moduledev.valid_package_name("abc*&%^*&%1234") == False
+    assert moduledev.valid_package_name("abc1234-_")
+    assert not moduledev.valid_package_name("abc1234 ")
+    assert not moduledev.valid_package_name("abc*&%^*&%1234")

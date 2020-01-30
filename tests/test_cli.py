@@ -1,6 +1,5 @@
 import os
 
-import click
 import pytest
 
 from moduledev.cli import mdcli
@@ -201,9 +200,7 @@ def setup_basic_package(runner, root):
 def setup_path_package(runner, tmpdir, root):
     setup_basic_package(runner, root)
     os.mkdir(tmpdir / "bin")
-    result = runner.invoke(
-        mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin")]
-    )
+    return runner.invoke(mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin")])
 
 
 def test_path_add(runner, tmpdir, root):
@@ -227,7 +224,7 @@ def test_path_add_dest(runner, tmpdir, root):
     )
     assert result.exit_code == 0
     assert os.path.exists(root / "package" / "1.0" / "testbin")
-    assert"PATH $basedir/testbin" in "\n".join(
+    assert "PATH $basedir/testbin" in "\n".join(
         open(root / "package" / ".modulefile").readlines()
     )
 
@@ -301,7 +298,7 @@ def test_path_remove(runner, tmpdir, root):
     )
     assert result.exit_code == 0
     assert not os.path.exists(root / "package" / "1.0" / "bintest")
-    assert not "bin" in "\n".join(open(root / "package" / ".modulefile").readlines())
+    assert "bin" not in "\n".join(open(root / "package" / ".modulefile").readlines())
 
 
 def test_path_view(runner, tmpdir, root):

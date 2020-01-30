@@ -1,5 +1,4 @@
 import os
-import sys
 
 import pytest
 
@@ -43,11 +42,12 @@ def test_unformatted_config(example_config):
 
 def test_load_nothing():
     cfg = moduledev.Config(_filename="nonexistentfile")
+    assert len(cfg.config) == 0
 
 
 def test_load_unparseable(data_dir):
     with pytest.raises(SystemExit):
-        cfg = moduledev.Config(_filename=os.path.join(data_dir, "bad_config.yaml"))
+        moduledev.Config(_filename=os.path.join(data_dir, "bad_config.yaml"))
 
 
 def test_save_load(empty_config):

@@ -8,19 +8,19 @@ import moduledev
 
 def test_empty_module_tree(empty_module_tree):
     assert empty_module_tree.name is None
-    assert empty_module_tree.valid() == False
+    assert not empty_module_tree.valid()
 
 
 def test_setup_module_tree(empty_module_tree):
     module_tree = empty_module_tree
     module_tree.setup("test")
-    assert module_tree.valid() == True
+    assert module_tree.valid()
     assert module_tree.name == "test"
 
 
 def test_setup_module_tree_in_bad_dir(tmpdir):
-    """Setup should fail if the directory does not exist, 
-       if it is not writeable or there is anything in the 
+    """Setup should fail if the directory does not exist,
+       if it is not writeable or there is anything in the
        directory"""
     module_tree = moduledev.ModuleTree(tmpdir / "example")
     with pytest.raises(ValueError):
@@ -38,25 +38,25 @@ def test_setup_module_tree_in_bad_dir(tmpdir):
 
 def test_corrupted_module_tree(empty_module_tree):
     os.mkdir(empty_module_tree.modulefile_dir())
-    assert empty_module_tree.valid() == False
+    assert not empty_module_tree.valid()
     os.mkdir(empty_module_tree.module_dir())
-    assert empty_module_tree.valid() == False
+    assert not empty_module_tree.valid()
     f = open(empty_module_tree._master_module_file_name("test"), "w")
     f.write("testcontent")
     f.close()
-    assert empty_module_tree.valid() == True
+    assert empty_module_tree.valid()
 
 
 def test_init_module(example_module, example_module_tree):
     builder = example_module_tree.init_module(example_module)
-    assert builder.clean() == False
-    assert builder.valid() == True
+    assert not builder.clean()
+    assert builder.valid()
 
 
 def test_category(example_module, tmpdir, example_module_tree):
     example_module.name = "categoried_package"
     example_module.category = "testcategory"
-    builder = example_module_tree.init_module(example_module)
+    example_module_tree.init_module(example_module)
     loader = example_module_tree.load_module(
         example_module.name, example_module.version
     )
@@ -72,26 +72,26 @@ def test_unclean_init_module(example_module, example_module_tree):
 def test_unclean_init_module_overwrite(example_module, example_module_tree):
     example_module_tree.init_module(example_module)
     builder = example_module_tree.init_module(example_module, overwrite=True)
-    assert builder.clean() == False
-    assert builder.valid() == True
+    assert not builder.clean()
+    assert builder.valid()
 
 
 def test_init_categoried_module(example_module, example_module_tree):
     example_module.category = "acategory"
     builder = example_module_tree.init_module(example_module)
-    assert builder.clean() == False
-    assert builder.valid() == True
+    assert not builder.clean()
+    assert builder.valid()
 
 
 def test_init_versionlevel_module(example_module, example_module_tree):
     example_module.toplevel = False
     builder = example_module_tree.init_module(example_module)
-    assert builder.clean() == False
-    assert builder.valid() == True
+    assert not builder.clean()
+    assert builder.valid()
 
 
 def test_load_module(example_module, example_module_tree):
-    builder = example_module_tree.init_module(example_module)
+    example_module_tree.init_module(example_module)
     loader = example_module_tree.load_module(
         example_module.name, example_module.version
     )
@@ -111,7 +111,7 @@ def test_bad_module_file(example_module, example_module_tree):
         example_module_tree.load_module(example_module.name, example_module.version)
 
 
-def test_load_module(example_module, example_module_tree):
+def test_load_module_extravar(example_module, example_module_tree):
     builder = example_module_tree.init_module(example_module)
     with open(builder.moduledotfile_path(), "a") as f:
         f.write("set EXTRAVAR True")
@@ -125,7 +125,7 @@ def test_load_module(example_module, example_module_tree):
 def test_empty_path(example_module, example_module_tree):
     builder = example_module_tree.init_module(example_module)
     fakepath = moduledev.Path("nonexistentpath", "prepend-path", "BIN")
-    assert builder.path_exists(fakepath) == False
+    assert not builder.path_exists(fakepath)
 
 
 def test_path_trailing_slash(example_module, example_module_tree):
@@ -137,8 +137,8 @@ def test_save_path_trailing_slash(example_builder, bindir):
     binpath = moduledev.Path("bin/", "prepend-path", "PATH")
     example_builder.add_path(bindir, binpath)
     example_builder.save_module_file()
-    dotfile_text = "\n".join(open(example_builder.moduledotfile_path()).readlines())
-    assert example_builder.path_exists(binpath) == True
+    "\n".join(open(example_builder.moduledotfile_path()).readlines())
+    assert example_builder.path_exists(binpath)
     assert "/" != binpath.resolve(example_builder.module_path())[-1]
 
 
@@ -146,7 +146,7 @@ def test_add_path(example_module, example_module_tree, bindir):
     builder = example_module_tree.init_module(example_module)
     binpath = moduledev.Path("bin", "prepend-path", "PATH")
     builder.add_path(bindir, binpath)
-    assert builder.path_exists(binpath) == True
+    assert builder.path_exists(binpath)
 
 
 def test_save_path(example_builder, bindir):
@@ -154,7 +154,7 @@ def test_save_path(example_builder, bindir):
     example_builder.add_path(bindir, binpath)
     example_builder.save_module_file()
     dotfile_text = "\n".join(open(example_builder.moduledotfile_path()).readlines())
-    assert example_builder.path_exists(binpath) == True
+    assert example_builder.path_exists(binpath)
     assert "bin" in dotfile_text
     assert "PATH" in dotfile_text
 
@@ -167,7 +167,7 @@ def test_remove_path(example_builder, bindir):
     example_builder.remove_path(binpath)
     example_builder.save_module_file()
     dotfile_text = "\n".join(open(example_builder.moduledotfile_path()).readlines())
-    assert example_builder.path_exists(binpath) == False
+    assert not example_builder.path_exists(binpath)
     assert "bin" not in dotfile_text
     assert "PATH" not in dotfile_text
 
@@ -185,9 +185,9 @@ def test_extra_commands(example_module, example_module_tree):
 
 def test_versions(example_module_tree, example_module):
     example_module.version = "1.0"
-    builder1 = example_module_tree.init_module(example_module)
+    example_module_tree.init_module(example_module)
     example_module.version = "1.1"
-    builder2 = example_module_tree.init_module(example_module)
+    example_module_tree.init_module(example_module)
     loader = example_module_tree.load_module(example_module.name)
     assert loader.module.version == "1.1"
     assert loader.available_versions() == ["1.0", "1.1"]
@@ -196,17 +196,17 @@ def test_versions(example_module_tree, example_module):
 def test_module_find(example_module_tree, example_module):
     example_module.name = "hello"
     example_module.version = "1.0"
-    builder1 = example_module_tree.init_module(example_module)
+    example_module_tree.init_module(example_module)
     example_module.version = "1.1"
-    builder2 = example_module_tree.init_module(example_module)
+    example_module_tree.init_module(example_module)
     example_module.name = "hey"
-    builder3 = example_module_tree.init_module(example_module)
+    example_module_tree.init_module(example_module)
     assert set(m.name for m in example_module_tree.modules()) == set(["hey", "hello"])
     assert len(list(example_module_tree.modules(all_versions=True))) == 3
 
 
 def test_module_find_in_empty(empty_module_tree):
-    assert empty_module_tree.valid() == False
+    assert not empty_module_tree.valid()
     with pytest.raises(RuntimeError):
         list(empty_module_tree.modules())
 
