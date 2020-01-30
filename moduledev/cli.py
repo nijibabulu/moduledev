@@ -313,16 +313,19 @@ def check_module(module_tree, module_name, version, parse_error_handler=log_erro
 @click.argument("MODULE_NAME")
 @click.argument("VARIABLE_NAME")
 @click.argument("SRC_PATH")
+@click.argument("DST_PATH", required=False)
 @click.pass_context
-def add(ctx, action, version, module_name, variable_name, src_path, copy, overwrite):
+def add(ctx, action, version, module_name, variable_name, src_path, dst_path, copy, overwrite):
     """Add or update a path to a module"""
     if not os.path.exists(src_path):
         raise SystemExit(f"Cannot add path: source path {src_path} does not exist.")
+    if dst_path is None:
+        dst_path = src_path
     module_tree = ctx.obj.check_module_tree()
     loader = check_module(
         module_tree, module_name, version, parse_error_handler=log_error_and_exit
     )
-    path_obj = Path(src_path, f"{action}-path", variable_name)
+    path_obj = Path(dst_path, f"{action}-path", variable_name)
     if loader.path_exists(path_obj):
         if overwrite:
             loader.remove_path(path_obj)

@@ -219,6 +219,19 @@ def test_path_add(runner, tmpdir, root):
     )
 
 
+def test_path_add_dest(runner, tmpdir, root):
+    setup_basic_package(runner, root)
+    os.mkdir(tmpdir / "bin")
+    result = runner.invoke(
+        mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin"), "testbin"]
+    )
+    assert result.exit_code == 0
+    assert os.path.exists(root / "package" / "1.0" / "testbin")
+    assert"PATH $basedir/testbin" in "\n".join(
+        open(root / "package" / ".modulefile").readlines()
+    )
+
+
 def test_path_add_notexists(runner, tmpdir, root):
     setup_basic_package(runner, root)
     result = runner.invoke(
