@@ -2,6 +2,7 @@
 .vscode
 .venv
 .coverage
+.vim
 
 __pycache__
 *.egg-info
