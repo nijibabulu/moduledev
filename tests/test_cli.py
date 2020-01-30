@@ -73,7 +73,7 @@ def test_newlines_in_info_strings(runner, root):
     assert "toolong" in result.output
 
     runner.invoke(mdcli, ["config", "set", "maintainer", "maintainer\ntoolong"])
-    result = runner.invoke(mdcli, ["--root", root, "init", "packagemaint", "1.0",])
+    result = runner.invoke(mdcli, ["--root", root, "init", "packagemaint", "1.0", ])
     assert "Newlines not allowed" in result.output
     assert result.exit_code == 0
     result = runner.invoke(mdcli, ["--root", root, "show", "packagedesc"])
