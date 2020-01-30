@@ -315,7 +315,17 @@ def check_module(module_tree, module_name, version, parse_error_handler=log_erro
 @click.argument("SRC_PATH")
 @click.argument("DST_PATH", required=False)
 @click.pass_context
-def add(ctx, action, version, module_name, variable_name, src_path, dst_path, copy, overwrite):
+def add(
+    ctx,
+    action,
+    version,
+    module_name,
+    variable_name,
+    src_path,
+    dst_path,
+    copy,
+    overwrite,
+):
     """Add or update a path to a module"""
     if not os.path.exists(src_path):
         raise SystemExit(f"Cannot add path: source path {src_path} does not exist.")

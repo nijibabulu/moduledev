@@ -2,8 +2,6 @@ import itertools
 import os
 import re
 
-import click
-
 
 def writeable_dir(path):
     """return true if a directory exists and is writeable"""
