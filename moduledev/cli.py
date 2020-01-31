@@ -371,7 +371,7 @@ def add(
 @module_arg
 @click.argument("SRC_PATH")
 @click.pass_context
-def remove(ctx, module_name, src_path, version):
+def rm(ctx, module_name, src_path, version):
     """Remove a path from a module"""
     module_tree = ctx.obj.check_module_tree()
     loader = check_module(
@@ -386,7 +386,7 @@ def remove(ctx, module_name, src_path, version):
 @version_option
 @click.argument("MODULE_NAME")
 @click.pass_context
-def view(ctx, module_name, version):
+def list(ctx, module_name, version):
     """List all paths in a module"""
     module_tree = ctx.obj.check_module_tree()
     loader = check_module(module_tree, module_name, version)

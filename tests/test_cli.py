@@ -41,6 +41,23 @@ def test_no_setup(runner, root):
     assert "moduledev setup" in str(result.exception)
 
 
+def test_init_cli(runner, tmpdir, root):
+    runner.invoke(mdcli, ["--root", root, "setup", "test"])
+    result = runner.invoke(
+        mdcli, ["--root", root, "init", "package", "1.0", "description", "helptext"]
+    )
+    assert result.exit_code == 0
+    assert 'set DESCRIPTION "description"' in "\n".join(
+        open(tmpdir / "test" / "package" / ".modulefile").readlines()
+    )
+    assert 'set HELPTEXT "helptext"' in "\n".join(
+        open(tmpdir / "test" / "package" / ".modulefile").readlines()
+    )
+    assert 'set MAINTAINER "nomaintainer"' in "\n".join(
+        open(tmpdir / "test" / "package" / ".modulefile").readlines()
+    )
+
+
 def test_newlines_in_info_strings(runner, root):
     runner.invoke(mdcli, ["--root", root, "setup", "test"])
     result = runner.invoke(
@@ -294,16 +311,16 @@ def test_path_remove(runner, tmpdir, root):
     os.mkdir(tmpdir / "bintest")
     runner.invoke(mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bintest")])
     result = runner.invoke(
-        mdcli, ["path", "remove", "package", "bintest"], catch_exceptions=False,
+        mdcli, ["path", "rm", "package", "bintest"], catch_exceptions=False,
     )
     assert result.exit_code == 0
     assert not os.path.exists(root / "package" / "1.0" / "bintest")
     assert "bin" not in "\n".join(open(root / "package" / ".modulefile").readlines())
 
 
-def test_path_view(runner, tmpdir, root):
+def test_path_list(runner, tmpdir, root):
     setup_path_package(runner, tmpdir, root)
-    result = runner.invoke(mdcli, ["path", "view", "package"])
+    result = runner.invoke(mdcli, ["path", "list", "package"])
     assert result.exit_code == 0
     assert "bin" in result.output
 
@@ -321,12 +338,12 @@ def test_path_add_unparseable_file(runner, tmpdir, root):
     assert "parse error" in result.output
 
 
-def test_path_view_unparseable_file(runner, tmpdir, root):
+def test_path_list_unparseable_file(runner, tmpdir, root):
     setup_path_package(runner, tmpdir, root)
     with open(root / "package" / ".modulefile", "a") as f:
         f.write('unparseable "line\n')
     os.mkdir(tmpdir / "unwriteabletest")
-    result = runner.invoke(mdcli, ["path", "view", "package"])
+    result = runner.invoke(mdcli, ["path", "list", "package"])
     assert result.exit_code == 0
     assert "parse error" in result.output
 
