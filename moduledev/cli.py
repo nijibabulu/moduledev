@@ -5,6 +5,13 @@ import click
 from colorama import Fore, Style
 
 from . import Config, Module, ModuleTree, Path, util
+from .options import (
+    force_option,
+    version_option,
+    module_arg,
+    version_arg,
+    path_add_options,
+)
 
 EDITOR = os.environ.get("EDITOR", "vim")
 
@@ -15,8 +22,8 @@ SETUP_CLR = Fore.RED
 
 
 class CliCfg:
-    def __init__(self, config, root, maintainer):
-        self.config, self.root, self.maintainer = (config, root, maintainer)
+    def __init__(self, root, maintainer):
+        self.config, self.root, self.maintainer = (Config(), root, maintainer)
 
     def check_root(self):
         """
@@ -82,20 +89,20 @@ def mdcli(ctx, maintainer, root):
     init subcommand. Add paths with the update subcommand. Adjust global
     configuration with the config subcommand.
     """
-    ctx.obj = CliCfg(Config(), root, maintainer)
+    ctx.obj = CliCfg(root, maintainer)
 
 
 @mdcli.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
-@click.option("--force", is_flag=True, default=False)
+@force_option
 @click.option(
     "--category", help="Set a category for the module (defaults to the repo name)"
 )
-@click.argument("PACKAGE_NAME")
+@module_arg
 @click.argument("VERSION")
-@click.argument("HELPTEXT", default="", required=False)
 @click.argument("DESCRIPTION", default="", required=False)
+@click.argument("HELPTEXT", default="", required=False)
 @click.pass_context
-def init(ctx, force, package_name, version, helptext, description, category):
+def init(ctx, force, module_name, version, helptext, description, category):
     """
     Create a new module or add a module version. For example, the
     command
@@ -142,9 +149,9 @@ def init(ctx, force, package_name, version, helptext, description, category):
         )
         raise SystemExit("")
 
-    if not util.valid_package_name(package_name):
+    if not util.valid_package_name(module_name):
         click.secho(
-            f'"{package_name}" is not a valid package name. Package names '
+            f'"{module_name}" is not a valid package name. Package names '
             f"may contain only alphanumeric characters and underscores.",
             fg="red",
         )
@@ -153,7 +160,7 @@ def init(ctx, force, package_name, version, helptext, description, category):
     module_tree = ctx.obj.check_module_tree()
     m = Module(
         module_tree,
-        package_name,
+        module_name,
         version,
         check_string_for_newlines("maintainer", maintainer),
         check_string_for_newlines("helptext", helptext),
@@ -169,9 +176,9 @@ def init(ctx, force, package_name, version, helptext, description, category):
 
 
 @mdcli.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
-@click.option("--force", is_flag=True, default=False)
-@click.argument("MODULE_NAME")
-@click.argument("VERSION", required=False)
+@force_option
+@module_arg
+@version_arg
 @click.pass_context
 def rm(ctx, module_name, force, version):
     """Remove a module. Will default to the latest version of the module if no
@@ -295,6 +302,28 @@ def check_module(module_tree, module_name, version, parse_error_handler=log_erro
     return loader
 
 
+"""
+@click.option(
+    "--action",
+    type=click.Choice(["prepend", "append"]),
+    default="append",
+    show_default=True,
+    help="Prepend or append the evnironment variable",
+)
+@version_option
+@click.option(
+    "--copy",
+    is_flag=True,
+    help="Copy the files contained in the path (default is " "create a symlink)",
+)
+@click.option("--overwrite", is_flag=True, help="Overwrite an old path if it exists.")
+@module_arg
+@click.argument("VARIABLE_NAME")
+@click.argument("SRC_PATH")
+@click.argument("DST_PATH", required=False)
+"""
+
+
 @path.command()
 @click.option(
     "--action",
@@ -303,17 +332,7 @@ def check_module(module_tree, module_name, version, parse_error_handler=log_erro
     show_default=True,
     help="Prepend or append the evnironment variable",
 )
-@click.option("--version", help="Specify the module version (default to latest)")
-@click.option(
-    "--copy",
-    is_flag=True,
-    help="Copy the files contained in the path (default is " "create a symlink)",
-)
-@click.option("--overwrite", is_flag=True, help="Overwrite an old path if it exists.")
-@click.argument("MODULE_NAME")
-@click.argument("VARIABLE_NAME")
-@click.argument("SRC_PATH")
-@click.argument("DST_PATH", required=False)
+@path_add_options
 @click.pass_context
 def add(
     ctx,
@@ -348,8 +367,8 @@ def add(
 
 
 @path.command()
-@click.option("--version", help="Specify the module version (default to latest)")
-@click.argument("MODULE_NAME")
+@version_option
+@module_arg
 @click.argument("SRC_PATH")
 @click.pass_context
 def remove(ctx, module_name, src_path, version):
@@ -364,7 +383,7 @@ def remove(ctx, module_name, src_path, version):
 
 
 @path.command()
-@click.option("--version", help="Specify the module version (default to latest)")
+@version_option
 @click.argument("MODULE_NAME")
 @click.pass_context
 def view(ctx, module_name, version):
@@ -381,8 +400,8 @@ def view(ctx, module_name, version):
 
 @mdcli.command(cls=ModuleDevCommand, short_help_color=INTERACT_CLR)
 @click.option("--editor", help="Specify the editor", default=EDITOR, show_default=True)
-@click.option("--version", help="Specify the module version (default to latest)")
-@click.argument("MODULE_NAME")
+@version_option
+@module_arg
 @click.pass_context
 def edit(ctx, module_name, version, editor):
     """Edit the module file for a package"""
@@ -394,7 +413,7 @@ def edit(ctx, module_name, version, editor):
 
 
 @mdcli.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
-@click.option("--version", help="Specify the module version (default to latest)")
+@version_option
 @click.argument("MODULE_NAME")
 @click.pass_context
 def show(ctx, module_name, version):
@@ -421,7 +440,7 @@ def list(ctx, all_versions):
 
 
 @mdcli.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
-@click.option("--version", help="Specify the module version (default to latest)")
+@version_option
 @click.argument("MODULE_NAME")
 @click.pass_context
 def location(ctx, module_name, version):
