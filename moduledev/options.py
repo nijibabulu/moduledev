@@ -1,8 +1,5 @@
 from click import argument, option
 
-from . import Config
-from . import ModuleTree
-
 
 def force_option(f):
     return option("--force", is_flag=True, default=False)(f)
@@ -32,12 +29,6 @@ def module_arg(f):
 
 def version_arg(f):
     return argument("VERSION", required=False)(f)
-
-
-def setup_options(f):
-    f = root_option(f)
-    f = maintainer_option(f)
-    return f
 
 
 def path_add_options(f):
