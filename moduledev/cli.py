@@ -366,12 +366,12 @@ def add(
     loader.save_module_file()
 
 
-@path.command()
+@path.command(name="rm")
 @version_option
 @module_arg
 @click.argument("SRC_PATH")
 @click.pass_context
-def rm(ctx, module_name, src_path, version):
+def path_rm(ctx, module_name, src_path, version):
     """Remove a path from a module"""
     module_tree = ctx.obj.check_module_tree()
     loader = check_module(
