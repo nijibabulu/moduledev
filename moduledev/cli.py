@@ -248,18 +248,21 @@ def config():
     pass
 
 
-@config.command()
+@config.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
 @click.argument("SETTING", required=False)
 @click.pass_context
 def get(ctx, setting):
+    """Show a setting from the configuration. If no setting is given, dump all settings
+       in YAML format"""
     print(f"{ctx.obj.config.dump(setting)}")
 
 
-@config.command()
+@config.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
 @click.argument("SETTING")
 @click.argument("VALUE")
 @click.pass_context
 def set(ctx, setting, value):
+    """Give a configuration setting a value."""
     ctx.obj.config.set(setting, value)
     ctx.obj.config.save()
 
