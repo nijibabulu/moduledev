@@ -324,7 +324,7 @@ def check_module(module_tree, module_name, version, parse_error_handler=log_erro
 """
 
 
-@path.command()
+@path.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
 @click.option(
     "--action",
     type=click.Choice(["prepend", "append"]),
@@ -366,7 +366,7 @@ def add(
     loader.save_module_file()
 
 
-@path.command(name="rm")
+@path.command(name="rm", cls=ModuleDevCommand, short_help_color=SETUP_CLR)
 @version_option
 @module_arg
 @click.argument("SRC_PATH")
@@ -382,7 +382,7 @@ def path_rm(ctx, module_name, src_path, version):
     loader.save_module_file()
 
 
-@path.command()
+@path.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
 @version_option
 @click.argument("MODULE_NAME")
 @click.pass_context
