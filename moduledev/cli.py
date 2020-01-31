@@ -306,15 +306,7 @@ def check_module(module_tree, module_name, version, parse_error_handler=log_erro
 
 
 def path_add(
-    ctx,
-    version,
-    module_name,
-    variable_name,
-    src_path,
-    dst_path,
-    copy,
-    overwrite,
-    verb,
+    ctx, version, module_name, variable_name, src_path, dst_path, copy, overwrite, verb,
 ):
     if not os.path.exists(src_path):
         raise SystemExit(f"Cannot add path: source path {src_path} does not exist.")
@@ -359,7 +351,6 @@ def setenv(*args, **kwargs):
     """Set a path name to a single value. This implies that the path is mutually
        exclusive with any other value."""
     path_add(*args, **kwargs, verb="setenv")
-
 
 
 @path.command(name="rm", cls=ModuleDevCommand, short_help_color=SETUP_CLR)
