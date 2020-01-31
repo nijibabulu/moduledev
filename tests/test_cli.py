@@ -105,7 +105,7 @@ def test_trailing_shash(runner, tmpdir, root):
     runner.invoke(mdcli, ["init", "package", "1.0"])
     os.mkdir(tmpdir / "bin")
     result = runner.invoke(
-        mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin/")]
+        mdcli, ["path", "append", "package", "PATH", str(tmpdir / "bin/")]
     )
     assert result.exit_code == 0
     assert os.path.exists(tmpdir / "test" / "package" / "1.0" / "bin")
@@ -118,12 +118,12 @@ def test_broken_link(runner, root, tmpdir):
     runner.invoke(mdcli, ["setup", "test"])
     runner.invoke(mdcli, ["init", "package", "1.0"])
     os.mkdir(tmpdir / "bin")
-    runner.invoke(mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin")])
+    runner.invoke(mdcli, ["path", "append", "package", "PATH", str(tmpdir / "bin")])
     os.rmdir(tmpdir / "bin")
     os.makedirs(tmpdir / "b" / "bin")
     result = runner.invoke(
         mdcli,
-        ["path", "add", "--overwrite", "package", "PATH", str(tmpdir / "b" / "bin")],
+        ["path", "append", "--overwrite", "package", "PATH", str(tmpdir / "b" / "bin")],
     )
 
     assert result.exit_code == 0
@@ -214,30 +214,51 @@ def setup_basic_package(runner, root):
     runner.invoke(mdcli, ["init", "package", "1.0"])
 
 
-def setup_path_package(runner, tmpdir, root):
+def setup_path_package(runner, tmpdir, root, action="append"):
     setup_basic_package(runner, root)
     os.mkdir(tmpdir / "bin")
-    return runner.invoke(mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin")])
+    return runner.invoke(mdcli, ["path", action, "package", "PATH", str(tmpdir / "bin")])
 
 
-def test_path_add(runner, tmpdir, root):
+def test_path_append(runner, tmpdir, root):
     setup_basic_package(runner, root)
     os.mkdir(tmpdir / "bin")
     result = runner.invoke(
-        mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin")]
+        mdcli, ["path", "append", "package", "PATH", str(tmpdir / "bin")]
     )
     assert result.exit_code == 0
     assert os.path.exists(root / "package" / "1.0" / "bin")
     assert "PATH $basedir/bin" in "\n".join(
         open(root / "package" / ".modulefile").readlines()
     )
+    assert "append-path PATH $basedir/bin" in "\n".join(
+        open(root / "package" / ".modulefile").readlines()
+    )
 
 
-def test_path_add_dest(runner, tmpdir, root):
+def test_path_prepend(runner, tmpdir, root):
+    result = setup_path_package(runner, tmpdir, root, action="prepend")
+    assert result.exit_code == 0
+    assert os.path.exists(root / "package" / "1.0" / "bin")
+    assert "prepend-path PATH $basedir/bin" in "\n".join(
+        open(root / "package" / ".modulefile").readlines()
+    )
+
+
+def test_path_setenv(runner, tmpdir, root):
+    result = setup_path_package(runner, tmpdir, root, action="setenv")
+    assert result.exit_code == 0
+    assert os.path.exists(root / "package" / "1.0" / "bin")
+    assert "setenv PATH $basedir/bin" in "\n".join(
+        open(root / "package" / ".modulefile").readlines()
+    )
+
+
+def test_path_append_dest(runner, tmpdir, root):
     setup_basic_package(runner, root)
     os.mkdir(tmpdir / "bin")
     result = runner.invoke(
-        mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin"), "testbin"]
+        mdcli, ["path", "append", "package", "PATH", str(tmpdir / "bin"), "testbin"]
     )
     assert result.exit_code == 0
     assert os.path.exists(root / "package" / "1.0" / "testbin")
@@ -246,23 +267,23 @@ def test_path_add_dest(runner, tmpdir, root):
     )
 
 
-def test_path_add_notexists(runner, tmpdir, root):
+def test_path_append_notexists(runner, tmpdir, root):
     setup_basic_package(runner, root)
     result = runner.invoke(
-        mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin")]
+        mdcli, ["path", "append", "package", "PATH", str(tmpdir / "bin")]
     )
     assert result.exit_code != 0
     assert type(result.exception) == SystemExit
     assert "does not exist" in str(result.exception)
 
 
-def test_path_add_nomodule(runner, tmpdir, root):
+def test_path_append_nomodule(runner, tmpdir, root):
     runner.invoke(mdcli, ["config", "set", "root", str(root)])
     runner.invoke(mdcli, ["setup", "test"])
     os.mkdir(tmpdir / "bin")
     result = runner.invoke(
         mdcli,
-        ["path", "add", "--version", "1.0", "package", "PATH", str(tmpdir / "bin")],
+        ["path", "append", "--version", "1.0", "package", "PATH", str(tmpdir / "bin")],
     )
     import traceback
 
@@ -272,29 +293,29 @@ def test_path_add_nomodule(runner, tmpdir, root):
     assert "Module package-1.0 does not exist" in str(result.exception)
 
 
-def test_path_add_nooverwrite(runner, tmpdir, root):
+def test_path_append_nooverwrite(runner, tmpdir, root):
     setup_basic_package(runner, root)
     os.mkdir(tmpdir / "bin")
-    runner.invoke(mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin")])
+    runner.invoke(mdcli, ["path", "append", "package", "PATH", str(tmpdir / "bin")])
     result = runner.invoke(
-        mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bin")]
+        mdcli, ["path", "append", "package", "PATH", str(tmpdir / "bin")]
     )
     assert result.exit_code != 0
     assert "already exists" in str(result.output)
 
 
-def test_path_add_overwrite_copy(runner, tmpdir, root):
+def test_path_append_overwrite_copy(runner, tmpdir, root):
     setup_basic_package(runner, root)
     os.mkdir(tmpdir / "bin")
     runner.invoke(
-        mdcli, ["path", "add", "--copy", "package", "PATH", str(tmpdir / "bin")],
+        mdcli, ["path", "append", "--copy", "package", "PATH", str(tmpdir / "bin")],
     )
     os.mkdir(tmpdir / "bin" / "hi")
     result = runner.invoke(
         mdcli,
         [
             "path",
-            "add",
+            "append",
             "--copy",
             "--overwrite",
             "package",
@@ -309,7 +330,7 @@ def test_path_add_overwrite_copy(runner, tmpdir, root):
 def test_path_remove(runner, tmpdir, root):
     setup_basic_package(runner, root)
     os.mkdir(tmpdir / "bintest")
-    runner.invoke(mdcli, ["path", "add", "package", "PATH", str(tmpdir / "bintest")])
+    runner.invoke(mdcli, ["path", "append", "package", "PATH", str(tmpdir / "bintest")])
     result = runner.invoke(
         mdcli, ["path", "rm", "package", "bintest"], catch_exceptions=False,
     )
@@ -325,13 +346,13 @@ def test_path_list(runner, tmpdir, root):
     assert "bin" in result.output
 
 
-def test_path_add_unparseable_file(runner, tmpdir, root):
+def test_path_append_unparseable_file(runner, tmpdir, root):
     setup_path_package(runner, tmpdir, root)
     with open(root / "package" / ".modulefile", "a") as f:
         f.write('unparseable "line\n')
     os.mkdir(tmpdir / "unwriteabletest")
     result = runner.invoke(
-        mdcli, ["path", "add", "package", "PATH", str(tmpdir / "unwriteabletest")]
+        mdcli, ["path", "append", "package", "PATH", str(tmpdir / "unwriteabletest")]
     )
     assert result.exit_code == 1
     assert type(result.exception) == SystemExit

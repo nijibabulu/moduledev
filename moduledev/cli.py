@@ -305,41 +305,8 @@ def check_module(module_tree, module_name, version, parse_error_handler=log_erro
     return loader
 
 
-"""
-@click.option(
-    "--action",
-    type=click.Choice(["prepend", "append"]),
-    default="append",
-    show_default=True,
-    help="Prepend or append the evnironment variable",
-)
-@version_option
-@click.option(
-    "--copy",
-    is_flag=True,
-    help="Copy the files contained in the path (default is " "create a symlink)",
-)
-@click.option("--overwrite", is_flag=True, help="Overwrite an old path if it exists.")
-@module_arg
-@click.argument("VARIABLE_NAME")
-@click.argument("SRC_PATH")
-@click.argument("DST_PATH", required=False)
-"""
-
-
-@path.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
-@click.option(
-    "--action",
-    type=click.Choice(["prepend", "append"]),
-    default="append",
-    show_default=True,
-    help="Prepend or append the evnironment variable",
-)
-@path_add_options
-@click.pass_context
-def add(
+def path_add(
     ctx,
-    action,
     version,
     module_name,
     variable_name,
@@ -347,8 +314,8 @@ def add(
     dst_path,
     copy,
     overwrite,
+    verb,
 ):
-    """Add or update a path to a module"""
     if not os.path.exists(src_path):
         raise SystemExit(f"Cannot add path: source path {src_path} does not exist.")
     if dst_path is None:
@@ -357,7 +324,7 @@ def add(
     loader = check_module(
         module_tree, module_name, version, parse_error_handler=log_error_and_exit
     )
-    path_obj = Path(dst_path, f"{action}-path", variable_name)
+    path_obj = Path(dst_path, f"{verb}", variable_name)
     if loader.path_exists(path_obj):
         if overwrite:
             loader.remove_path(path_obj)
@@ -367,6 +334,32 @@ def add(
             )
     loader.add_path(src_path, path_obj, not copy)
     loader.save_module_file()
+
+
+@path.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
+@path_add_options
+@click.pass_context
+def prepend(*args, **kwargs):
+    """Prepend a path to a path variable in a module"""
+    path_add(*args, **kwargs, verb="prepend-path")
+
+
+@path.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
+@path_add_options
+@click.pass_context
+def append(*args, **kwargs):
+    """Append a path to a path variable in a module"""
+    path_add(*args, **kwargs, verb="append-path")
+
+
+@path.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
+@path_add_options
+@click.pass_context
+def setenv(*args, **kwargs):
+    """Set a path name to a single value. This implies that the path is mutually
+       exclusive with any other value."""
+    path_add(*args, **kwargs, verb="setenv")
+
 
 
 @path.command(name="rm", cls=ModuleDevCommand, short_help_color=SETUP_CLR)
