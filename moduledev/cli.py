@@ -7,10 +7,10 @@ from colorama import Fore, Style
 from . import Config, Module, ModuleTree, Path, util
 from .options import (
     force_option,
-    version_option,
     module_arg,
-    version_arg,
     path_add_options,
+    version_arg,
+    version_option,
 )
 
 EDITOR = os.environ.get("EDITOR", "vim")
@@ -124,14 +124,10 @@ def init(ctx, force, module_name, version, helptext, description, category):
     Subsequently paths can be added to the module structure.
     Note moduledev setup must be run before this command.
     """
-    if ctx.obj.maintainer is None:
-        if ctx.obj.config.get("maintainer") is None:
-            click.echo(
-                "Warning: maintainer not set; defaulting to nomaintainer", err=True
-            )
-            maintainer = "nomaintainer"
-        else:
-            maintainer = ctx.obj.config.get("maintainer")
+    maintainer = ctx.obj.maintainer or ctx.obj.config.get("maintainer")
+    if maintainer is None:
+        click.echo("Warning: maintainer not set; defaulting to nomaintainer", err=True)
+        maintainer = "nomaintainer"
 
     def check_string_for_newlines(name, string):
         if "\n" in string:
@@ -192,9 +188,9 @@ def rm(ctx, module_name, force, version):
 
 
 @mdcli.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
-@click.argument("NAME")
+@click.argument("REPO_NAME")
 @click.pass_context
-def setup(ctx, name):
+def setup(ctx, repo_name):
     """
     Set up the root directory structure. The root
     itself should be set either here in the configuration (as "root"). This will
@@ -203,16 +199,16 @@ def setup(ctx, name):
     \b
     ${ROOT}
     |-- module
-    |   `-- ${NAME}_modulefile
+    |   `-- ${REPO_NAME}_modulefile
     `-- modulefile
 
-    The ${NAME}_modulefile contains boilerplate header for all modules and will
+    The ${REPO_NAME}_modulefile contains boilerplate header for all modules and will
     be invoked for every module that is created. The file itself searches for
     the modulefile specific to the module. See the init subcommand for details.
     """
     used_root = ctx.obj.check_root()
     module_tree = ModuleTree(used_root)
-    if not module_tree.can_setup(name):
+    if not module_tree.can_setup(repo_name):
         click.secho(
             "Module tree root must be set up in an empty, "
             "writeable directory. Change the root location\neither "
@@ -221,7 +217,7 @@ def setup(ctx, name):
             fg="red",
         )
         raise SystemExit(" ")
-    module_tree.setup(name)
+    module_tree.setup(repo_name)
     click.echo("Module repository successfully setup in\n")
     click.secho(f"{used_root}\n", bold=True)
     click.echo(
@@ -230,7 +226,7 @@ def setup(ctx, name):
         "you use):\n"
     )
     click.secho(f"module use --append {used_root}/modulefile", bold=True)
-    click.secho(f"module use --append {used_root}/modulefile/{name}", bold=True)
+    click.secho(f"module use --append {used_root}/modulefile/{repo_name}", bold=True)
     click.echo(
         "If you haven't already, it would be useful to configure "
         "a global maintainer and root:\n"
@@ -369,11 +365,11 @@ def path_rm(ctx, module_name, src_path, version):
     loader.save_module_file()
 
 
-@path.command(cls=ModuleDevCommand, short_help_color=INFO_CLR)
+@path.command(name="list", cls=ModuleDevCommand, short_help_color=INFO_CLR)
 @version_option
 @click.argument("MODULE_NAME")
 @click.pass_context
-def list(ctx, module_name, version):
+def path_list(ctx, module_name, version):
     """List all paths in a module"""
     module_tree = ctx.obj.check_module_tree()
     loader = check_module(module_tree, module_name, version)
@@ -435,7 +431,3 @@ def location(ctx, module_name, version):
     module_tree = ctx.obj.check_module_tree()
     loader = check_module(module_tree, module_name, version)
     click.echo(loader.module_path())
-
-
-# if __name__ == "__main__":
-# moduledev()
