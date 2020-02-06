@@ -58,6 +58,70 @@ def test_init_cli(runner, tmpdir, root):
     )
 
 
+def test_init_two_versions(runner, tmpdir, root):
+    runner.invoke(mdcli, ["--root", root, "setup", "test"])
+    runner.invoke(
+        mdcli, ["--root", root, "init", "package", "1.0", "description", "helptext"]
+    )
+    result = runner.invoke(mdcli, ["--root", root, "init", "package", "1.1"])
+    assert result.exit_code == 0
+    assert "already exists" in result.output
+    assert 'set DESCRIPTION "description"' in "\n".join(
+        open(tmpdir / "test" / "package" / ".modulefile").readlines()
+    )
+    assert 'set HELPTEXT "helptext"' in "\n".join(
+        open(tmpdir / "test" / "package" / ".modulefile").readlines()
+    )
+    assert 'set MAINTAINER "nomaintainer"' in "\n".join(
+        open(tmpdir / "test" / "package" / ".modulefile").readlines()
+    )
+
+
+def test_init_two_versions_with_paths(runner, tmpdir, root):
+    runner.invoke(mdcli, ["--root", root, "setup", "test"])
+    runner.invoke(
+        mdcli, ["--root", root, "init", "package", "1.0", "description", "helptext"]
+    )
+    os.mkdir(tmpdir / "bin")
+    runner.invoke(
+        mdcli,
+        ["--root", root, "path", "prepend", "package", "PATH", str(tmpdir / "bin/")],
+    )
+    result = runner.invoke(mdcli, ["--root", root, "init", "package", "1.1"])
+    assert result.exit_code == 0
+    assert "already exists" in result.output
+    assert "defines paths which are not yet present" in result.output
+    assert "prepend-path PATH $basedir/bin" in result.output
+
+
+def test_init_detached_cli(runner, tmpdir, root):
+    runner.invoke(mdcli, ["--root", root, "setup", "test"])
+    result = runner.invoke(
+        mdcli,
+        [
+            "--root",
+            root,
+            "init",
+            "--detached",
+            "package",
+            "1.0",
+            "description",
+            "helptext",
+        ],
+    )
+    assert result.exit_code == 0
+    assert os.path.exists(tmpdir / "test" / "package" / "1.0" / ".modulefile")
+    assert 'set DESCRIPTION "description"' in "\n".join(
+        open(tmpdir / "test" / "package" / "1.0" / ".modulefile").readlines()
+    )
+    assert 'set HELPTEXT "helptext"' in "\n".join(
+        open(tmpdir / "test" / "package" / "1.0" / ".modulefile").readlines()
+    )
+    assert 'set MAINTAINER "nomaintainer"' in "\n".join(
+        open(tmpdir / "test" / "package" / "1.0" / ".modulefile").readlines()
+    )
+
+
 def test_newlines_in_info_strings(runner, root):
     runner.invoke(mdcli, ["--root", root, "setup", "test"])
     result = runner.invoke(
@@ -90,7 +154,7 @@ def test_newlines_in_info_strings(runner, root):
     assert "toolong" in result.output
 
     runner.invoke(mdcli, ["config", "set", "maintainer", "maintainer\ntoolong"])
-    result = runner.invoke(mdcli, ["--root", root, "init", "packagemaint", "1.0", ])
+    result = runner.invoke(mdcli, ["--root", root, "init", "packagemaint", "1.0",])
     assert "Newlines not allowed" in result.output
     assert result.exit_code == 0
     result = runner.invoke(mdcli, ["--root", root, "show", "packagedesc"])
@@ -217,7 +281,9 @@ def setup_basic_package(runner, root):
 def setup_path_package(runner, tmpdir, root, action="append"):
     setup_basic_package(runner, root)
     os.mkdir(tmpdir / "bin")
-    return runner.invoke(mdcli, ["path", action, "package", "PATH", str(tmpdir / "bin")])
+    return runner.invoke(
+        mdcli, ["path", action, "package", "PATH", str(tmpdir / "bin")]
+    )
 
 
 def test_path_append(runner, tmpdir, root):

@@ -97,12 +97,20 @@ def mdcli(ctx, maintainer, root):
 @click.option(
     "--category", help="Set a category for the module (defaults to the repo name)"
 )
+@click.option(
+    "--shared/--detached",
+    "shared",
+    default=True,
+    help="Use a shared module file (default) that has the same "
+    "relative paths and description as all versions of the package, "
+    "or a detached version-specific module file.",
+)
 @module_arg
 @click.argument("VERSION")
 @click.argument("DESCRIPTION", default="", required=False)
 @click.argument("HELPTEXT", default="", required=False)
 @click.pass_context
-def init(ctx, force, module_name, version, helptext, description, category):
+def init(ctx, shared, force, module_name, version, helptext, description, category):
     """
     Create a new module or add a module version. For example, the
     command
@@ -154,21 +162,31 @@ def init(ctx, force, module_name, version, helptext, description, category):
         raise SystemExit("")
 
     module_tree = ctx.obj.check_module_tree()
-    m = Module(
-        module_tree,
-        module_name,
-        version,
-        check_string_for_newlines("maintainer", maintainer),
-        check_string_for_newlines("helptext", helptext),
-        check_string_for_newlines("description", description),
-        category=category,
+    shared_module = module_tree.shared_module(
+        module_name, version, error_handler=log_error
     )
+    if shared and shared_module is not None:
+        click.secho("Module file already exists. Not updating.", fg="red")
+        m = shared_module
+        m.version = version
+    else:
+        m = Module(
+            module_tree,
+            module_name,
+            version,
+            check_string_for_newlines("maintainer", maintainer),
+            check_string_for_newlines("helptext", helptext),
+            check_string_for_newlines("description", description),
+            category=category,
+            shared=shared,
+        )
     if not module_tree.module_clean(m) and not force:
         raise SystemExit(
             f"Some file exist where the module should be "
             f"installed. Use --force to overwrite them."
         )
     module_tree.init_module(m, overwrite=force)
+    warn_unfulfilled_paths(module_tree, m)
 
 
 @mdcli.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)
@@ -301,6 +319,25 @@ def check_module(module_tree, module_name, version, parse_error_handler=log_erro
     return loader
 
 
+def warn_unfulfilled_paths(module_tree, module, parse_error_handler=log_error):
+    """
+    Alert the user of any paths defined in the module's modulefile but not
+    existing in the current module directory.
+    """
+
+    loader = module_tree.load_module(module.name, module.version, parse_error_handler)
+    unfulfilled_paths = [
+        path for path in loader.module.paths if not loader.path_exists(path)
+    ]
+    if len(unfulfilled_paths):
+        click.secho(
+            f"The module {module.name}-{module.version} defines paths which are not yet present:",
+            fg="red",
+        )
+        for unfulfilled_path in unfulfilled_paths:
+            click.secho(f"{unfulfilled_path}", fg="red")
+
+
 def path_add(
     ctx, version, module_name, variable_name, src_path, dst_path, copy, overwrite, verb,
 ):
@@ -322,6 +359,7 @@ def path_add(
             )
     loader.add_path(src_path, path_obj, not copy)
     loader.save_module_file()
+    warn_unfulfilled_paths(module_tree, loader.module, log_error)
 
 
 @path.command(cls=ModuleDevCommand, short_help_color=SETUP_CLR)

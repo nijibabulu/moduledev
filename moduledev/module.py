@@ -145,6 +145,22 @@ class ModuleTree:
         builder.build()
         return builder
 
+    def shared_module(self, module, version, error_handler=util.raise_value_error):
+        """
+        Get the module object for a shared module, if it exists.
+        :param module: a module name
+        :param version: a module version
+        :error_handler: a callback handler of an error if the module parsing fails
+
+        :return: a Module object if a shared module exists for this module, otherwise None.
+        """
+        loader = ModuleLoader(self, module, version)
+        if loader.shared_exists():
+            loader.load(force_shared=True, error_handler=error_handler)
+            return loader.module
+        else:
+            return None
+
     def module_clean(self, module):
         """
         Return True if nothing is in place where a module would be initialized.
@@ -184,7 +200,7 @@ class ModuleTree:
                 f"Module {name}-{version} does not appear to "
                 f"be a valid module in the tree {self.root_dir}"
             )
-        loader.load(parse_error_handler)
+        loader.load(error_handler=parse_error_handler)
         return loader
 
 
@@ -201,7 +217,7 @@ class ModuleLocation(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def toplevel(self):
+    def shared(self):
         raise NotImplementedError
 
     @abstractmethod
@@ -217,10 +233,13 @@ class ModuleLocation(metaclass=ABCMeta):
 
     def moduledotfile_path(self):
         base = self.module_base()
-        if self.toplevel():
+        if self.shared():
             return os.path.join(base, ".modulefile")
         else:
             return os.path.join(base, self.version(), ".modulefile")
+
+    def shared_moduledotfile_path(self):
+        return os.path.join(self.module_base(), ".modulefile")
 
     def module_base(self):
         """
@@ -299,8 +318,8 @@ class ModuleBuilder(ModuleLocation):
     def category_name(self):
         return self.module.category or self.module_tree.name
 
-    def toplevel(self):
-        return self.module.toplevel
+    def shared(self):
+        return self.module.shared
 
     def name(self):
         return self.module.name
@@ -334,12 +353,15 @@ class ModuleLoader(ModuleLocation):
         files = glob(os.path.join(self.module_tree.modulefile_dir(), "*", self.name()))
         return os.path.basename(os.path.dirname(files[0]))
 
-    def toplevel(self):
+    def shared(self):
         return not os.path.exists(
             os.path.join(
                 self.module_tree.root_dir, self.name(), self.version(), ".modulefile"
             )
         )
+
+    def shared_exists(self):
+        return os.path.exists(self.shared_moduledotfile_path())
 
     def name(self):
         return self._name
@@ -353,13 +375,13 @@ class ModuleLoader(ModuleLocation):
         else:
             return self._version
 
-    def load(self, error_handler=util.raise_value_error):
+    def load(self, force_shared=False, error_handler=util.raise_value_error):
         self.module = Module.from_file(
             self.moduledotfile_path(),
             self.module_tree,
             self.name(),
             self.version(),
-            self.toplevel(),
+            force_shared or self.shared(),
             self.category_name(),
             error_handler,
         )
@@ -394,7 +416,7 @@ class Module:
         description="",
         extra_vars=None,
         category=None,
-        toplevel=True,
+        shared=True,
         extra_commands=None,
     ):
         """
@@ -408,8 +430,8 @@ class Module:
         :param description: longer form description of the module
         :param extra_vars: a dict of extra variables to add
         :param category: a category for the module
-        :param toplevel: whether the module file comes at the top level or
-                         (False) version level
+        :param shared: whether the module file is shared among multiple versions
+                       or, if false, is specific to this version
         :param extra_commands: list of extra lines to add to the module file
         """
         if extra_commands is None:
@@ -423,7 +445,7 @@ class Module:
         self.helptext = helptext
         self.description = description
         self.category = category
-        self.toplevel = toplevel
+        self.shared = shared
         self.extra_vars = extra_vars
         self.extra_commands = extra_commands
 
@@ -436,7 +458,7 @@ class Module:
         root,
         name,
         version,
-        toplevel,
+        shared,
         category=None,
         error_handler=util.raise_value_error,
     ):
@@ -445,7 +467,7 @@ class Module:
         :param filename: the path to the module dotfile
         :param name: the package name for the module
         :param version: the version of the module:
-        :param toplevel: whether the moduledotfile is located at the toplevel
+        :param shared: whether the moduledotfile is located at the shared
         :param category: the category of the module
         :param error_handler: a which handles any parse errors during parsing.
             If there is a parse error and a handler is provided, the line is
@@ -454,7 +476,7 @@ class Module:
 
         :return: a new module parsed from the given file
         """
-        module = cls(root, name, version, toplevel=toplevel, category=category)
+        module = cls(root, name, version, shared=shared, category=category)
         for line in open(filename):
             try:
                 fields = shlex.split(line.strip())
