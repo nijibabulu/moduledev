@@ -1,3 +1,4 @@
+import re
 from setuptools import setup
 
 with open("moduledev/__init__.py") as f:
