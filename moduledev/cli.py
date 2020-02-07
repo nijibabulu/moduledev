@@ -55,16 +55,26 @@ class CliCfg:
 
 class ModuleDevCliMeta(type):
     def __init__(cls, name, bases, dct):
+        click_major = int(click.__version__.split('.')[0])
         def _init(self, name, short_help_color=Fore.WHITE, *args, **kwargs):
             super(cls, self).__init__(name, *args, **kwargs)
             self.short_help_color = short_help_color
 
+        def _init_pre7(self, name, short_help_color=Fore.WHITE, *args, **kwargs):
+            super(cls, self).__init__(name, *args, **kwargs)
+            self.short_help = short_help_color + self.short_help + Style.RESET_ALL
+
         def _get_short_help_str(self, limit):
             s = super(cls, self).get_short_help_str(limit)
+            print("setting color!")
             return self.short_help_color + s + Style.RESET_ALL
 
-        cls.__init__ = _init
-        cls.get_short_help_str = _get_short_help_str
+
+        if click_major >= 7:
+            cls.__init__ = _init
+            cls.get_short_help_str = _get_short_help_str
+        else:
+            cls.__init__ = _init_pre7
         super(ModuleDevCliMeta, cls).__init__(name, bases, dct)
 
 
