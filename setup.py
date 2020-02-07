@@ -1,8 +1,11 @@
 from setuptools import setup
 
+with open("moduledev/__init__.py") as f:
+    version = re.search(r"__version__ = '(.*?)'", f.read()).group(1)
+
 setup(
     name='moduledev',
-    version='0.1',
+    version=version,
     packages=['moduledev'],
     license='MIT',
     install_requires=['click', 'PyYAML', 'colorama'],
