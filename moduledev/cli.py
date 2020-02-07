@@ -2,10 +2,17 @@ import os
 from subprocess import call
 
 import click
-from colorama import Fore, Style
 
 from . import Config, Module, ModuleTree, Path, util
-from .options import (
+from ._color import (
+    GROUP_CLR,
+    INFO_CLR,
+    INTERACT_CLR,
+    SETUP_CLR,
+    ModuleDevCommand,
+    ModuleDevGroup,
+)
+from ._options import (
     force_option,
     module_arg,
     path_add_options,
@@ -15,10 +22,37 @@ from .options import (
 
 EDITOR = os.environ.get("EDITOR", "vim")
 
-INTERACT_CLR = Fore.GREEN
-GROUP_CLR = Fore.YELLOW
-INFO_CLR = Fore.MAGENTA
-SETUP_CLR = Fore.RED
+
+def log_error(err):
+    click.secho(err, fg="red", err=True)
+
+
+def log_error_and_wait_for_confirmation(err):  # pragma: no cover
+    log_error(err)
+    click.pause(err=True)
+
+
+def log_error_and_exit(err):
+    log_error(err)
+    raise ValueError
+
+
+def warn_unfulfilled_paths(module_tree, module, parse_error_handler=log_error):
+    """
+    Alert the user of any paths defined in the module's modulefile but not
+    existing in the current module directory.
+    """
+    loader = module_tree.load_module(module.name, module.version, parse_error_handler)
+    unfulfilled_paths = [
+        path for path in loader.module.paths if not loader.path_exists(path)
+    ]
+    if len(unfulfilled_paths):
+        click.secho(
+            f"The module {module.name}-{module.version} defines paths which are not yet present:",
+            fg="red",
+        )
+        for unfulfilled_path in unfulfilled_paths:
+            click.secho(f"{unfulfilled_path}", fg="red")
 
 
 class CliCfg:
@@ -52,38 +86,24 @@ class CliCfg:
             raise SystemExit(f"Module tree not set up. Run moduledev setup first.")
         return module_tree
 
+    def check_module(
+        self, module_tree, module_name, version, parse_error_handler=log_error
+    ):
+        """
+        Check for the presence of a module on the module tree and return it if it
+        exists. If it does not exist, inform the user and exit.
+        """
 
-class ModuleDevCliMeta(type):
-    def __init__(cls, name, bases, dct):
-        click_major = int(click.__version__.split('.')[0])
-        def _init(self, name, short_help_color=Fore.WHITE, *args, **kwargs):
-            super(cls, self).__init__(name, *args, **kwargs)
-            self.short_help_color = short_help_color
-
-        def _init_pre7(self, name, short_help_color=Fore.WHITE, *args, **kwargs):
-            super(cls, self).__init__(name, *args, **kwargs)
-            self.short_help = short_help_color + self.short_help + Style.RESET_ALL
-
-        def _get_short_help_str(self, limit):
-            s = super(cls, self).get_short_help_str(limit)
-            print("setting color!")
-            return self.short_help_color + s + Style.RESET_ALL
-
-
-        if click_major >= 7:
-            cls.__init__ = _init
-            cls.get_short_help_str = _get_short_help_str
-        else:
-            cls.__init__ = _init_pre7
-        super(ModuleDevCliMeta, cls).__init__(name, bases, dct)
-
-
-class ModuleDevCommand(click.Command, metaclass=ModuleDevCliMeta):
-    pass
-
-
-class ModuleDevGroup(click.Group, metaclass=ModuleDevCliMeta):
-    pass
+        if not module_tree.module_exists(module_name, version):
+            module_display = f"{module_name}"
+            if version is not None:
+                module_display += f"-{version}"
+            raise SystemExit(f"Module {module_display} does not exist.")
+        try:
+            loader = module_tree.load_module(module_name, version, parse_error_handler)
+        except ValueError as e:
+            raise SystemExit(f"Error loading module: {e}")
+        return loader
 
 
 @click.group(cls=ModuleDevGroup)
@@ -208,7 +228,7 @@ def rm(ctx, module_name, force, version):
     """Remove a module. Will default to the latest version of the module if no
     version is provided."""
     module_tree = ctx.obj.check_module_tree()
-    loader = check_module(module_tree, module_name, version)
+    loader = ctx.obj.check_module(module_tree, module_name, version)
     if not force:  # pragma: no cover
         if not click.confirm(f"Really delete {loader.module}?  "):
             raise SystemExit("Operation cancelled by user")
@@ -297,57 +317,6 @@ def path():
     pass
 
 
-def log_error(err):
-    click.secho(err, fg="red", err=True)
-
-
-def log_error_and_wait_for_confirmation(err):  # pragma: no cover
-    log_error(err)
-    click.pause(err=True)
-
-
-def log_error_and_exit(err):
-    log_error(err)
-    raise ValueError
-
-
-def check_module(module_tree, module_name, version, parse_error_handler=log_error):
-    """
-    Check for the presence of a module on the module tree and return it if it
-    exists. If it does not exist, inform the user and exit.
-    """
-
-    if not module_tree.module_exists(module_name, version):
-        module_display = f"{module_name}"
-        if version is not None:
-            module_display += f"-{version}"
-        raise SystemExit(f"Module {module_display} does not exist.")
-    try:
-        loader = module_tree.load_module(module_name, version, parse_error_handler)
-    except ValueError as e:
-        raise SystemExit(f"Error loading module: {e}")
-    return loader
-
-
-def warn_unfulfilled_paths(module_tree, module, parse_error_handler=log_error):
-    """
-    Alert the user of any paths defined in the module's modulefile but not
-    existing in the current module directory.
-    """
-
-    loader = module_tree.load_module(module.name, module.version, parse_error_handler)
-    unfulfilled_paths = [
-        path for path in loader.module.paths if not loader.path_exists(path)
-    ]
-    if len(unfulfilled_paths):
-        click.secho(
-            f"The module {module.name}-{module.version} defines paths which are not yet present:",
-            fg="red",
-        )
-        for unfulfilled_path in unfulfilled_paths:
-            click.secho(f"{unfulfilled_path}", fg="red")
-
-
 def path_add(
     ctx, version, module_name, variable_name, src_path, dst_path, copy, overwrite, verb,
 ):
@@ -356,7 +325,7 @@ def path_add(
     if dst_path is None:
         dst_path = src_path
     module_tree = ctx.obj.check_module_tree()
-    loader = check_module(
+    loader = ctx.obj.check_module(
         module_tree, module_name, version, parse_error_handler=log_error_and_exit
     )
     path_obj = Path(dst_path, f"{verb}", variable_name)
@@ -405,7 +374,7 @@ def setenv(*args, **kwargs):
 def path_rm(ctx, module_name, src_path, version):
     """Remove a path from a module"""
     module_tree = ctx.obj.check_module_tree()
-    loader = check_module(
+    loader = ctx.obj.check_module(
         module_tree, module_name, version, parse_error_handler=log_error_and_exit
     )
     path_obj = Path(src_path)
@@ -420,7 +389,7 @@ def path_rm(ctx, module_name, src_path, version):
 def path_list(ctx, module_name, version):
     """List all paths in a module"""
     module_tree = ctx.obj.check_module_tree()
-    loader = check_module(module_tree, module_name, version)
+    loader = ctx.obj.check_module(module_tree, module_name, version)
     print(
         "\n".join(
             f"{str(p)} -> {p.resolve(loader.module_path())}"
@@ -437,7 +406,7 @@ def path_list(ctx, module_name, version):
 def edit(ctx, module_name, version, editor):
     """Edit the module file for a package"""
     module_tree = ctx.obj.check_module_tree()
-    loader = check_module(
+    loader = ctx.obj.check_module(
         module_tree, module_name, version, log_error_and_wait_for_confirmation
     )
     call([editor, loader.moduledotfile_path()])
@@ -450,7 +419,7 @@ def edit(ctx, module_name, version, editor):
 def show(ctx, module_name, version):
     """Show the contents of a module's module file"""
     module_tree = ctx.obj.check_module_tree()
-    loader = check_module(module_tree, module_name, version)
+    loader = ctx.obj.check_module(module_tree, module_name, version)
     click.echo("".join(open(loader.moduledotfile_path()).readlines()))
 
 
@@ -477,5 +446,5 @@ def list(ctx, all_versions):
 def location(ctx, module_name, version):
     """Get the directory of a module by name"""
     module_tree = ctx.obj.check_module_tree()
-    loader = check_module(module_tree, module_name, version)
+    loader = ctx.obj.check_module(module_tree, module_name, version)
     click.echo(loader.module_path())
