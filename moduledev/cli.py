@@ -448,7 +448,7 @@ def edit(ctx, module_name, version, editor):
 @click.argument("MODULE_NAME")
 @click.pass_context
 def show(ctx, module_name, version):
-    """Show the module file associated with a module"""
+    """Show the contents of a module's module file"""
     module_tree = ctx.obj.check_module_tree()
     loader = check_module(module_tree, module_name, version)
     click.echo("".join(open(loader.moduledotfile_path()).readlines()))
