@@ -33,7 +33,7 @@ def version_arg(f):
 
 def path_add_options(f):
     f = argument("DST_PATH", required=False)(f)
-    f = argument("SRC_PATH", required=False)(f)
+    f = argument("SRC_PATH")(f)
     f = argument("VARIABLE_NAME")(f)
     f = module_arg(f)
     f = version_option(f)
